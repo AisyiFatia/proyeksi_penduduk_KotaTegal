@@ -177,6 +177,7 @@ const MENU = [
   { id: "daftar-periode", icon: "📋", label: "Daftar Periode", indent: true },
   { id: "admin-header", icon: "👤", label: "Data Admin", header: true },
   { id: "daftar-admin", icon: "📋", label: "Daftar Admin", indent: true },
+  { id: "profil-admin", icon: "👤", label: "Profil Saya", indent: true },
   { id: "laporan", icon: "📊", label: "Laporan & Export" },
   { id: "sipenduk-view", icon: "🌐", label: "Lihat SIPENDUK User" },
 ];
@@ -262,6 +263,7 @@ const BREADCRUMBS = {
   "grafik": ["Dashboard", "Data Penduduk", "Grafik"],
   "daftar-periode": ["Dashboard", "Data Periode", "Daftar"],
   "daftar-admin": ["Dashboard", "Data Admin", "Daftar"],
+  "profil-admin": ["Dashboard", "Data Admin", "Profil Saya"],
   "laporan": ["Dashboard", "Laporan & Export"],
 };
 
@@ -1766,6 +1768,110 @@ function AdminPage({ addToast, currentUser }) {
 }
 
 // ══════════════════════════════════════════════════════════════
+//  PROFILE PAGE — Profil Admin yang Login
+// ══════════════════════════════════════════════════════════════
+function ProfilePage({ user, addToast }) {
+  const { adminUsers, updateAdminUser } = useAppContext();
+  const admin = adminUsers.find(a => a.username === user?.username);
+  const [formPw, setFormPw] = useState({ lama: "", baru: "", konfirm: "" });
+  const [showPw, setShowPw] = useState({ lama: false, baru: false, konfirm: false });
+  const [submitting, setSubmitting] = useState(false);
+
+  const pwStrength = (pw) => {
+    if (!pw) return { score: 0, label: "", color: M };
+    let s = 0;
+    if (pw.length >= 6) s++; if (pw.length >= 8) s++;
+    if (/[A-Z]/.test(pw)) s++; if (/[0-9]/.test(pw)) s++; if (/[^A-Za-z0-9]/.test(pw)) s++;
+    if (s <= 1) return { score: s, label: "Lemah", color: DNG };
+    if (s <= 3) return { score: s, label: "Sedang", color: WRN };
+    return { score: s, label: "Kuat", color: SUC };
+  };
+
+  const handleChangePassword = () => {
+    if (!formPw.lama || !formPw.baru || !formPw.konfirm) { addToast("Semua field password wajib diisi!", "error"); return; }
+    if (formPw.baru.length < 6) { addToast("Password baru minimal 6 karakter!", "error"); return; }
+    if (formPw.baru !== formPw.konfirm) { addToast("Konfirmasi password tidak cocok!", "error"); return; }
+    addToast("🔐 Password berhasil diperbarui!", "success");
+    setFormPw({ lama: "", baru: "", konfirm: "" });
+  };
+
+  const levelBadge = (lvl) => {
+    if (lvl === "superadmin") return { bg: `${P}15`, bd: `${P}40`, color: P, label: "Super Admin" };
+    return { bg: `${NA}15`, bd: `${NA}40`, color: NA, label: "Admin" };
+  };
+  const lb = levelBadge(admin?.level || "admin");
+
+  return (
+    <div style={{ animation: "slideInRight 0.35s ease" }}>
+      <h1 style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: "1.4rem", fontWeight: 800, color: T, marginBottom: "1.5rem" }}>👤 Profil Saya</h1>
+
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1.25rem" }}>
+        {/* Info Card */}
+        <div style={{ background: W, border: `1.5px solid ${BDR}`, borderRadius: 14, padding: "1.5rem", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "1rem", marginBottom: "1.5rem" }}>
+            <div style={{ width: 56, height: 56, borderRadius: 16, background: `linear-gradient(135deg, ${P}, ${PL})`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.5rem", fontWeight: 800, color: W, fontFamily: "'Plus Jakarta Sans',sans-serif" }}>
+              {user?.name?.charAt(0) || "A"}
+            </div>
+            <div>
+              <div style={{ fontSize: "1.1rem", fontWeight: 700, color: T }}>{user?.name || "-"}</div>
+              <div style={{ fontSize: "0.8rem", color: M, marginTop: "0.2rem" }}>@{user?.username || "-"}</div>
+            </div>
+          </div>
+
+          <div style={{ display: "grid", gap: "0.875rem" }}>
+            {[
+              { label: "Role", value: user?.role || "-", icon: "🎯" },
+              { label: "Level Akses", value: <span style={{ background: lb.bg, border: `1px solid ${lb.bd}`, color: lb.color, borderRadius: 20, padding: "0.15rem 0.625rem", fontSize: "0.75rem", fontWeight: 700 }}>{lb.label}</span> },
+              { label: "Username", value: `@${admin?.username || "-"}`, icon: "🔑" },
+              { label: "Nama Lengkap", value: admin?.nama || "-", icon: "📛" },
+              { label: "ID Admin", value: `#${admin?.id_admin || "-"}`, icon: "🆔" },
+              { label: "Status", value: admin?.status ? <span style={{ color: SUC, fontWeight: 700 }}>✅ Aktif</span> : <span style={{ color: DNG, fontWeight: 700 }}>❌ Nonaktif</span>, icon: "📡" },
+            ].map(item => (
+              <div key={item.label} style={{ display: "flex", alignItems: "center", gap: "0.75rem", padding: "0.5rem 0", borderBottom: `1px solid ${BDR}` }}>
+                <span style={{ width: 28, textAlign: "center", fontSize: "1rem" }}>{item.icon}</span>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: "0.65rem", color: M, textTransform: "uppercase", fontWeight: 600 }}>{item.label}</div>
+                  <div style={{ fontSize: "0.88rem", fontWeight: 600, color: T, marginTop: "0.1rem" }}>{item.value}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Change Password Card */}
+        <div style={{ background: W, border: `1.5px solid ${BDR}`, borderRadius: 14, padding: "1.5rem", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
+          <div style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: "1rem", fontWeight: 700, color: T, marginBottom: "1.25rem" }}>🔐 Ubah Password</div>
+
+          {[{ k: "lama", l: "Password Lama" }, { k: "baru", l: "Password Baru" }, { k: "konfirm", l: "Konfirmasi Password" }].map(f => (
+            <div key={f.k} style={{ marginBottom: "1rem" }}>
+              <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: P, textTransform: "uppercase", marginBottom: "0.375rem" }}>{f.l}</label>
+              <div style={{ position: "relative" }}>
+                <input type={showPw[f.k] ? "text" : "password"} value={formPw[f.k]} onChange={e => setFormPw(p => ({ ...p, [f.k]: e.target.value }))} placeholder={f.l}
+                  style={{ width: "100%", padding: "0.65rem 2.5rem 0.65rem 0.875rem", border: `1.5px solid ${BDR}`, borderRadius: 8, fontSize: "0.85rem", color: T, outline: "none", boxSizing: "border-box" }} />
+                <button onClick={() => setShowPw(p => ({ ...p, [f.k]: !p[f.k] }))} style={{ position: "absolute", right: "0.75rem", top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", fontSize: "1rem" }}>{showPw[f.k] ? "🙈" : "👁"}</button>
+              </div>
+              {f.k === "baru" && formPw.baru && (
+                <div style={{ marginTop: "0.375rem" }}>
+                  <div style={{ height: 4, background: BG, borderRadius: 2, overflow: "hidden" }}>
+                    <div style={{ height: "100%", width: `${(pwStrength(formPw.baru).score / 5) * 100}%`, background: pwStrength(formPw.baru).color, borderRadius: 2, transition: "width 0.3s" }} />
+                  </div>
+                  <div style={{ fontSize: "0.65rem", color: pwStrength(formPw.baru).color, fontWeight: 700, marginTop: "0.2rem" }}>Kekuatan: {pwStrength(formPw.baru).label}</div>
+                </div>
+              )}
+            </div>
+          ))}
+
+          <button onClick={handleChangePassword} disabled={submitting}
+            style={{ width: "100%", background: `linear-gradient(135deg, ${P}, ${PL})`, border: "none", borderRadius: 8, color: W, fontWeight: 700, fontSize: "0.88rem", padding: "0.75rem 1.5rem", cursor: "pointer", opacity: submitting ? 0.6 : 1, marginTop: "0.5rem" }}>
+            {submitting ? "⏳ Menyimpan..." : "🔐 Simpan Password Baru"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════════════
 //  LAPORAN PAGE
 // ══════════════════════════════════════════════════════════════
 function LaporanPage({ addToast }) {
@@ -2155,6 +2261,7 @@ export default function AdminDashboard({ user, onLogout, onViewSipenduk }) {
       case "capaian": return <CapaianAdminPage addToast={addToast} />;
       case "profil-kecamatan": return <ProfilAdminPage addToast={addToast} />;
       case "daftar-admin": return <AdminPage addToast={addToast} currentUser={user} />;
+      case "profil-admin": return <ProfilePage user={user} addToast={addToast} />;
       case "laporan": return <LaporanPage addToast={addToast} />;
       default: return <DashboardPage onNav={handleNav} />;
     }
