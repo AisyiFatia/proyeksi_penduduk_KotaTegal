@@ -141,22 +141,22 @@ function useToast() {
 // ══════════════════════════════════════════════════════════════
 //  CONFIRM MODAL
 // ══════════════════════════════════════════════════════════════
-function ConfirmModal({ show, onConfirm, onCancel, msg }) {
+function ConfirmModal({ show, onConfirm, onCancel, msg, icon = "🗑️", title = "Konfirmasi Hapus", confirmText = "🗑️ Ya, Hapus", danger = true }) {
   if (!show) return null;
   return (
     <div style={{ position: "fixed", inset: 0, zIndex: 8000, background: "rgba(0,0,0,0.45)", display: "flex", alignItems: "center", justifyContent: "center", padding: "1rem" }}>
       <div style={{ background: W, borderRadius: 14, width: "100%", maxWidth: 400, boxShadow: "0 16px 48px rgba(0,0,0,0.22)", overflow: "hidden" }}>
         <div style={{ background: `linear-gradient(135deg, ${P}, ${PL})`, padding: "1.25rem 1.5rem", display: "flex", alignItems: "center", gap: "0.75rem" }}>
-          <span style={{ fontSize: "1.5rem" }}>🗑️</span>
-          <div style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontWeight: 700, color: W, fontSize: "1rem" }}>Konfirmasi Hapus</div>
+          <span style={{ fontSize: "1.5rem" }}>{icon}</span>
+          <div style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontWeight: 700, color: W, fontSize: "1rem" }}>{title}</div>
         </div>
         <div style={{ padding: "1.5rem" }}>
-          <p style={{ color: T, fontSize: "0.88rem", marginBottom: "0.5rem" }}>{msg || "Apakah Anda yakin ingin menghapus data ini?"}</p>
-          <p style={{ color: M, fontSize: "0.78rem" }}>Tindakan ini tidak dapat dibatalkan.</p>
+          <p style={{ color: T, fontSize: "0.88rem", marginBottom: "0.5rem" }}>{msg}</p>
+          {danger && <p style={{ color: M, fontSize: "0.78rem" }}>Tindakan ini tidak dapat dibatalkan.</p>}
         </div>
         <div style={{ padding: "0 1.5rem 1.5rem", display: "flex", gap: "0.75rem", justifyContent: "flex-end" }}>
           <button onClick={onCancel} style={{ background: W, border: `1.5px solid ${BDR}`, borderRadius: 8, color: M, fontWeight: 600, fontSize: "0.85rem", padding: "0.6rem 1.25rem", cursor: "pointer" }}>Batal</button>
-          <button onClick={onConfirm} style={{ background: `linear-gradient(135deg, ${DNG}, #B91C1C)`, border: "none", borderRadius: 8, color: W, fontWeight: 700, fontSize: "0.85rem", padding: "0.6rem 1.25rem", cursor: "pointer" }}>🗑️ Ya, Hapus</button>
+          <button onClick={onConfirm} style={{ background: danger ? `linear-gradient(135deg, ${DNG}, #B91C1C)` : `linear-gradient(135deg, ${P}, ${PL})`, border: "none", borderRadius: 8, color: W, fontWeight: 700, fontSize: "0.85rem", padding: "0.6rem 1.25rem", cursor: "pointer" }}>{confirmText}</button>
         </div>
       </div>
     </div>
@@ -2243,6 +2243,7 @@ function ProfilAdminPage({ addToast }) {
 export default function AdminDashboard({ user, onLogout, onViewSipenduk }) {
   const [activePage, setActivePage] = useState("dashboard");
   const [collapsed, setCollapsed] = useState(false);
+  const [logoutConfirm, setLogoutConfirm] = useState(false);
   const { toasts, add: addToast, remove: removeToast } = useToast();
 
   const handleNav = (page) => setActivePage(page);
@@ -2283,10 +2284,12 @@ export default function AdminDashboard({ user, onLogout, onViewSipenduk }) {
 
       <Toast toasts={toasts} removeToast={removeToast} />
 
+      <ConfirmModal show={logoutConfirm} onConfirm={() => { setLogoutConfirm(false); onLogout(); }} onCancel={() => setLogoutConfirm(false)} icon="🚪" title="Konfirmasi Keluar" confirmText="🚪 Ya, Keluar" danger={false} msg="Apakah Anda yakin ingin keluar dari panel admin? Anda akan kembali ke halaman utama SIPENDUK." />
+
       <div style={{ display: "flex", minHeight: "100vh" }}>
         <Sidebar active={activePage} onNav={handleNav} user={user} collapsed={collapsed} onViewSipenduk={onViewSipenduk} />
         <div style={{ flex: 1, marginLeft: collapsed ? 0 : 260, transition: "margin-left 0.3s ease", display: "flex", flexDirection: "column", minHeight: "100vh" }}>
-          <Topbar page={activePage} onToggleSidebar={() => setCollapsed(c => !c)} onLogout={onLogout} onViewSipenduk={onViewSipenduk} user={user} />
+          <Topbar page={activePage} onToggleSidebar={() => setCollapsed(c => !c)} onLogout={() => setLogoutConfirm(true)} onViewSipenduk={onViewSipenduk} user={user} />
           <main style={{ flex: 1, padding: "1.75rem 2rem", overflowX: "hidden" }}>
             {renderContent()}
           </main>
