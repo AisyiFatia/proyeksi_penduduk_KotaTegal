@@ -610,6 +610,7 @@ function DataPendudukPage({ showForm, addToast, onNav }) {
   const [importRaw, setImportRaw] = useState("");
   const [importPreview, setImportPreview] = useState([]);
   const [clearConfirm, setClearConfirm] = useState(false);
+  const [showFormInline, setShowFormInline] = useState(false);
   const PER_PAGE = 10;
 
   const filtered = pendudukData.filter(d => {
@@ -620,7 +621,7 @@ function DataPendudukPage({ showForm, addToast, onNav }) {
   const pageData = filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE);
 
   const openAdd = () => { setEditId(null); setForm(emptyForm); setFormErrors({}); onNav("tambah-penduduk"); };
-  const openEdit = (d) => { setEditId(d.id_penduduk); setForm({ ...d }); setFormErrors({}); onNav("tambah-penduduk"); };
+  const openEdit = (d) => { setEditId(d.id_penduduk); setForm({ ...d }); setFormErrors({}); setShowFormInline(true); };
 
   const validate = () => {
     const e = {};
@@ -643,7 +644,7 @@ function DataPendudukPage({ showForm, addToast, onNav }) {
       addPenduduk(row);
       addToast("✅ Data ditambahkan & tersinkron ke SIPENDUK User!", "success");
     }
-    setEditId(null); setForm(emptyForm); setFormErrors({});
+    setEditId(null); setForm(emptyForm); setFormErrors({}); setShowFormInline(false);
   };
 
   const doDelete = () => {
@@ -735,11 +736,10 @@ function DataPendudukPage({ showForm, addToast, onNav }) {
     <div>
       <ConfirmModal show={deleteId !== null} onConfirm={doDelete} onCancel={() => setDeleteId(null)} />
       <div style={{ marginBottom: "1.5rem", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "0.75rem" }}>
-        <h1 style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: "1.4rem", fontWeight: 800, color: T }}>
-          {editId ? "✏️ Edit Data Primer" : "👥 Data Primer"}
-        </h1>
+        <h1 style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: "1.4rem", fontWeight: 800, color: T }}>👥 Data Primer</h1>
         <div style={{ display: "flex", gap: "0.625rem" }}>
-          <button onClick={() => { setEditId(null); setForm(emptyForm); setFormErrors({}); }} style={{ background: editId ? `${WRN}15` : `linear-gradient(135deg, ${P}, ${PL})`, border: editId ? `1px solid ${WRN}` : "none", borderRadius: 8, color: editId ? WRN : W, fontWeight: 700, fontSize: "0.82rem", padding: "0.6rem 1.25rem", cursor: "pointer" }}>{editId ? "↩ Batal Edit" : "➕ Tambah Data"}</button>
+          {!showFormInline && !editId && <button onClick={() => { setEditId(null); setForm(emptyForm); setFormErrors({}); setShowFormInline(true); }} style={{ background: `linear-gradient(135deg, ${P}, ${PL})`, border: "none", borderRadius: 8, color: W, fontWeight: 700, fontSize: "0.82rem", padding: "0.6rem 1.25rem", cursor: "pointer" }}>➕ Tambah Data</button>}
+          {showFormInline && !editId && <button onClick={() => { setShowFormInline(false); setForm(emptyForm); setFormErrors({}); }} style={{ background: `${M}15`, border: `1px solid ${M}`, borderRadius: 8, color: M, fontWeight: 600, fontSize: "0.82rem", padding: "0.6rem 1.25rem", cursor: "pointer" }}>✕ Tutup Form</button>}
           <button onClick={() => {
             const rows = pendudukData.map(d => ({ ID: d.id_penduduk, Periode: d.id_priode, Tahun: d.tahun, Pindah: d.jumlah_pindah, Datang: d.jumlah_datang, Kelahiran: d.jumlah_kelahiran, Kematian: d.jumlah_kematian }));
             const header = Object.keys(rows[0] || {});
@@ -756,8 +756,8 @@ function DataPendudukPage({ showForm, addToast, onNav }) {
       <div style={{ background: "#DBEAFE", border: "1.5px solid #2563EB", borderRadius: 8, padding: "0.625rem 1rem", marginBottom: "1rem", fontSize: "0.78rem", color: "#1D4ED8", fontWeight: 600, display: "flex", alignItems: "center", gap: "0.5rem" }}>
         ℹ️ Data yang disimpan akan <strong>otomatis tersinkron</strong> ke tampilan SIPENDUK User secara real-time
       </div>
-      {/* Form */}
-      <div style={{ background: W, border: `1.5px solid ${BDR}`, borderRadius: 12, padding: "2rem", boxShadow: "0 2px 10px rgba(0,0,0,0.05)", marginBottom: "1.5rem" }}>
+      {/* Form — hidden by default */}
+      {(showFormInline || editId) && <div style={{ background: `linear-gradient(135deg, #FAFAFA, ${W})`, border: `1.5px solid ${P}40`, borderRadius: 12, padding: "2rem", boxShadow: "0 2px 10px rgba(0,0,0,0.05)", marginBottom: "1.5rem" }}>
         <div style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: "0.95rem", fontWeight: 700, color: T, marginBottom: "1rem" }}>{editId ? "✏️ Edit" : "➕ Tambah"} Data Primer</div>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1.25rem" }}>
           <div>
@@ -774,9 +774,9 @@ function DataPendudukPage({ showForm, addToast, onNav }) {
         <hr style={{ border: "none", borderTop: `1px solid ${BDR}`, margin: "1.25rem 0" }} />
         <div style={{ display: "flex", gap: "0.875rem" }}>
           <button onClick={handleSubmit} style={{ background: `linear-gradient(135deg, ${P}, ${PL})`, border: "none", borderRadius: 8, color: W, fontWeight: 700, fontSize: "0.88rem", padding: "0.75rem 2rem", cursor: "pointer", boxShadow: `0 3px 12px ${P}44` }}>💾 Simpan</button>
-          {editId && <button onClick={() => { setEditId(null); setForm(emptyForm); setFormErrors({}); }} style={{ background: W, border: `1.5px solid ${BDR}`, borderRadius: 8, color: M, fontWeight: 600, fontSize: "0.88rem", padding: "0.75rem 1.5rem", cursor: "pointer" }}>↩ Batal</button>}
+          {editId && <button onClick={() => { setEditId(null); setForm(emptyForm); setFormErrors({}); setShowFormInline(false); }} style={{ background: W, border: `1.5px solid ${BDR}`, borderRadius: 8, color: M, fontWeight: 600, fontSize: "0.88rem", padding: "0.75rem 1.5rem", cursor: "pointer" }}>↩ Batal</button>}
         </div>
-      </div>
+      </div>}
 
       <div style={{ background: W, border: `1.5px solid ${BDR}`, borderRadius: 10, padding: "0.875rem 1.25rem", display: "flex", gap: "0.75rem", marginBottom: "1.25rem", alignItems: "center", flexWrap: "wrap" }}>
         <select value={filterCol} onChange={e => setFilterCol(e.target.value)} style={{ padding: "0.55rem 0.75rem", border: `1px solid ${BDR}`, borderRadius: 7, fontSize: "0.82rem", color: T, cursor: "pointer" }}>
@@ -1864,6 +1864,7 @@ function MigrasiPage({ addToast }) {
   const [showImport, setShowImport] = useState(false);
   const [importRaw, setImportRaw] = useState("");
   const [importPreview, setImportPreview] = useState([]);
+  const [showFormInline, setShowFormInline] = useState(false);
 
   const SEKUNDER_KEYS = NEW_FIELDS.map(f => f.k);
   const sekunderData = pendudukData.filter(d => SEKUNDER_KEYS.some(k => (d[k] ?? 0) > 0));
@@ -1885,7 +1886,7 @@ function MigrasiPage({ addToast }) {
     NEW_FIELDS.forEach(f => { row[f.k] = form[f.k] === "" ? 0 : +form[f.k]; });
     if (editId) { updatePenduduk(editId, row); addToast("✅ Data sekunder diperbarui!", "success"); }
     else { addPenduduk(row); addToast("✅ Data sekunder ditambahkan!", "success"); }
-    setForm(INIT); setEditId(null);
+    setForm(INIT); setEditId(null); setShowFormInline(false);
   };
 
   const inp = (key, label, type, opts = {}) => {
@@ -1929,8 +1930,12 @@ function MigrasiPage({ addToast }) {
       <div style={{ background: "#F0FDF4", border: "1.5px solid #22C55E", borderRadius: 8, padding: "0.625rem 1rem", marginBottom: "1.25rem", fontSize: "0.78rem", color: "#166534", fontWeight: 600, display: "flex", alignItems: "center", gap: "0.5rem" }}>
         ℹ️ Data sekunder (gender, usia, kecamatan, sosial, tenaga kerja, pendidikan) dipisah dari data primer migrasi.
       </div>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1.25rem" }}>
-        <div style={{ background: W, border: `1.5px solid ${BDR}`, borderRadius: 12, padding: "1.5rem", boxShadow: "0 2px 10px rgba(0,0,0,0.05)" }}>
+      <div style={{ display: "flex", gap: "0.75rem", marginBottom: "0.75rem" }}>
+        {!showFormInline && !editId && <button onClick={() => { setEditId(null); setForm(INIT); setErrors({}); setShowFormInline(true); }} style={{ background: `linear-gradient(135deg, ${P}, ${PL})`, border: "none", borderRadius: 8, color: W, fontWeight: 700, fontSize: "0.82rem", padding: "0.6rem 1.25rem", cursor: "pointer" }}>➕ Tambah Data Sekunder</button>}
+        {showFormInline && !editId && <button onClick={() => { setShowFormInline(false); setForm(INIT); setErrors({}); }} style={{ background: `${M}15`, border: `1px solid ${M}`, borderRadius: 8, color: M, fontWeight: 600, fontSize: "0.82rem", padding: "0.6rem 1.25rem", cursor: "pointer" }}>✕ Tutup Form</button>}
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: "1.25rem" }}>
+        {(showFormInline || editId) && <div style={{ background: `linear-gradient(135deg, #FAFAFA, ${W})`, border: `1.5px solid ${P}40`, borderRadius: 12, padding: "1.5rem", boxShadow: "0 2px 10px rgba(0,0,0,0.05)" }}>
           <div style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: "0.95rem", fontWeight: 700, color: T, marginBottom: "1rem" }}>{editId ? "✏️ Edit" : "➕ Tambah"} Data Sekunder</div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem", marginBottom: "0.75rem" }}>
             <div>{inp("id_priode", "ID Periode", "select", { options: periodeData.map(p => ({ val: p.id_priode, label: p.nama_priode }) ) })}</div>
@@ -1950,9 +1955,9 @@ function MigrasiPage({ addToast }) {
           <hr style={{ border: "none", borderTop: `1px solid ${BDR}`, margin: "0.75rem 0" }} />
           <div style={{ display: "flex", gap: "0.75rem" }}>
             <button onClick={handleSubmit} style={{ background: `linear-gradient(135deg, ${P}, ${PL})`, border: "none", borderRadius: 7, color: W, fontWeight: 700, fontSize: "0.82rem", padding: "0.6rem 1.5rem", cursor: "pointer" }}>💾 Simpan</button>
-            {editId && <button onClick={() => { setForm(INIT); setEditId(null); }} style={{ background: W, border: `1.5px solid ${BDR}`, borderRadius: 7, color: M, fontWeight: 600, fontSize: "0.82rem", padding: "0.6rem 1.25rem", cursor: "pointer" }}>↩ Batal</button>}
+            {editId && <button onClick={() => { setForm(INIT); setEditId(null); setShowFormInline(false); }} style={{ background: W, border: `1.5px solid ${BDR}`, borderRadius: 7, color: M, fontWeight: 600, fontSize: "0.82rem", padding: "0.6rem 1.25rem", cursor: "pointer" }}>↩ Batal</button>}
           </div>
-        </div>
+        </div>}
         <div>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "0.75rem" }}>
             <div style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: "0.85rem", fontWeight: 700, color: T }}>📋 Data Sekunder Tersimpan</div>
@@ -1983,7 +1988,7 @@ function MigrasiPage({ addToast }) {
                   <tbody>{sekunderData.map((d, i) => (
                     <tr key={d.id_penduduk} style={{ background: i % 2 === 0 ? W : BG }}>
                       <td style={{ padding: "0.35rem 0.6rem", whiteSpace: "nowrap" }}>
-                        <button onClick={() => { setEditId(d.id_penduduk); const f = { id_priode: d.id_priode, tahun: d.tahun }; NEW_FIELDS.forEach(fi => { f[fi.k] = d[fi.k] ?? ""; }); setForm(f); }} style={{ background: `${WRN}15`, border: `1px solid ${WRN}40`, borderRadius: 4, color: WRN, fontSize: "0.6rem", padding: "0.2rem 0.35rem", cursor: "pointer" }}>✏️</button>
+                        <button onClick={() => { setEditId(d.id_penduduk); const f = { id_priode: d.id_priode, tahun: d.tahun }; NEW_FIELDS.forEach(fi => { f[fi.k] = d[fi.k] ?? ""; }); setForm(f); setShowFormInline(true); }} style={{ background: `${WRN}15`, border: `1px solid ${WRN}40`, borderRadius: 4, color: WRN, fontSize: "0.6rem", padding: "0.2rem 0.35rem", cursor: "pointer" }}>✏️</button>
                         <button onClick={() => setDeleteId(d.id_penduduk)} style={{ background: `${DNG}15`, border: `1px solid ${DNG}40`, borderRadius: 4, color: DNG, fontSize: "0.6rem", padding: "0.2rem 0.35rem", cursor: "pointer", marginLeft: 2 }}>🗑️</button>
                       </td>
                       <td style={{ padding: "0.35rem 0.6rem", fontWeight: 700, color: T }}>{d.tahun}</td>
