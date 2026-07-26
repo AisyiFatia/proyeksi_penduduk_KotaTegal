@@ -4,7 +4,7 @@
 //  API backend dikelola di sini via React Context.
 // ══════════════════════════════════════════════════════════════
 
-import { createContext, useContext, useState, useCallback, useEffect } from "react";
+import { createContext, useContext, useState, useCallback, useEffect, useMemo } from "react";
 import {
   indikatorData as DATA_INDIKATOR,
   piramidaData as DATA_PIRAMIDA,
