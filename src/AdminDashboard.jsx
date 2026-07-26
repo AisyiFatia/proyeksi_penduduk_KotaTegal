@@ -1861,6 +1861,9 @@ function MigrasiPage({ addToast }) {
   const [editId, setEditId] = useState(null);
   const [deleteId, setDeleteId] = useState(null);
   const [errors, setErrors] = useState({});
+  const [showImport, setShowImport] = useState(false);
+  const [importRaw, setImportRaw] = useState("");
+  const [importPreview, setImportPreview] = useState([]);
 
   const SEKUNDER_KEYS = NEW_FIELDS.map(f => f.k);
   const sekunderData = pendudukData.filter(d => SEKUNDER_KEYS.some(k => (d[k] ?? 0) > 0));
@@ -1953,13 +1956,16 @@ function MigrasiPage({ addToast }) {
         <div>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "0.75rem" }}>
             <div style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: "0.85rem", fontWeight: 700, color: T }}>📋 Data Sekunder Tersimpan</div>
-            <button onClick={() => {
-              const csvRows = [["tahun", ...NEW_FIELDS.map(f => f.k)].join(",")];
-              sekunderData.forEach(d => { csvRows.push([d.tahun, ...NEW_FIELDS.map(f => d[f.k] ?? 0)].join(",")); });
-              const blob = new Blob([csvRows.join("\n")], { type: "text/csv" });
-              const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `data_sekunder_${new Date().toISOString().slice(0, 10)}.csv`; a.click();
-              addToast("✅ Data sekunder CSV siap!", "success");
-            }} style={{ background: "transparent", border: `1px solid ${BDR}`, borderRadius: 6, color: M, fontSize: "0.7rem", padding: "0.35rem 0.7rem", cursor: "pointer" }}>📥 Export CSV</button>
+            <div style={{ display: "flex", gap: "0.375rem" }}>
+              <button onClick={() => { setShowImport(true); setImportRaw(""); setImportPreview([]); }} style={{ background: `linear-gradient(135deg, #7C3AED, #A855F7)`, border: "none", borderRadius: 6, color: W, fontSize: "0.7rem", padding: "0.35rem 0.7rem", cursor: "pointer", fontWeight: 600 }}>📤 Import CSV</button>
+              <button onClick={() => {
+                const csvRows = [["tahun", ...NEW_FIELDS.map(f => f.k)].join(",")];
+                sekunderData.forEach(d => { csvRows.push([d.tahun, ...NEW_FIELDS.map(f => d[f.k] ?? 0)].join(",")); });
+                const blob = new Blob([csvRows.join("\n")], { type: "text/csv" });
+                const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `data_sekunder_${new Date().toISOString().slice(0, 10)}.csv`; a.click();
+                addToast("✅ Data sekunder CSV siap!", "success");
+              }} style={{ background: "transparent", border: `1px solid ${BDR}`, borderRadius: 6, color: M, fontSize: "0.7rem", padding: "0.35rem 0.7rem", cursor: "pointer" }}>📥 Export CSV</button>
+            </div>
           </div>
           {sekunderData.length === 0 ? (
             <div style={{ background: W, border: `1.5px solid ${BDR}`, borderRadius: 12, padding: "2rem", textAlign: "center", boxShadow: "0 2px 10px rgba(0,0,0,0.05)" }}>
@@ -1990,6 +1996,108 @@ function MigrasiPage({ addToast }) {
           )}
         </div>
       </div>
+
+      {/* Import CSV Modal */}
+      {showImport && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 9999 }} onClick={e => { if (e.target === e.currentTarget) setShowImport(false); }}>
+          <div style={{ background: W, borderRadius: 16, width: 720, maxWidth: "96vw", maxHeight: "90vh", overflow: "auto", padding: "1.75rem", boxShadow: "0 20px 60px rgba(0,0,0,0.3)" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
+              <div>
+                <div style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontWeight: 700, color: T, fontSize: "1rem" }}>Import Data Sekunder</div>
+                <div style={{ fontSize: "0.75rem", color: M, marginTop: "0.15rem" }}>CSV / tab separated — kolom: tahun, {NEW_FIELDS.slice(0, 3).map(f => f.k).join(", ")}, ... (21 field)</div>
+              </div>
+              <button onClick={() => setShowImport(false)} style={{ background: BG, border: "none", borderRadius: 6, color: M, fontSize: "1.1rem", width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>✕</button>
+            </div>
+            <div style={{ display: "flex", gap: "0.75rem", marginBottom: "1rem" }}>
+              <div style={{ flex: 1 }}>
+                <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: M, textTransform: "uppercase", marginBottom: "0.375rem" }}>Upload File CSV</label>
+                <input type="file" accept=".csv,.tsv,.txt" onChange={e => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  const reader = new FileReader();
+                  reader.onload = (ev) => {
+                    setImportRaw(ev.target?.result || "");
+                    const text = ev.target?.result || "";
+                    const lines = text.split("\n").map(l => l.trim()).filter(l => l);
+                    const parsed = [];
+                    const errors = [];
+                    for (let i = 0; i < lines.length; i++) {
+                      const line = lines[i];
+                      if (i === 0 && /tahun/i.test(line)) continue;
+                      let parts = line.split("\t").length > 1 ? line.split("\t") : line.split(",");
+                      parts = parts.map(p => p.replace(/["\r]/g, "").trim());
+                      const nums = parts.filter(p => p !== "").slice(0, 1 + NEW_FIELDS.length).map(p => parseInt(p));
+                      if (nums.length < 1 + NEW_FIELDS.length || nums.some(n => isNaN(n))) { errors.push(`Baris ${i + 1}: data tidak valid`); continue; }
+                      const entry = { tahun: nums[0] };
+                      NEW_FIELDS.forEach((f, idx) => { entry[f.k] = nums[idx + 1] ?? 0; });
+                      parsed.push(entry);
+                    }
+                    if (errors.length) addToast(`⚠️ ${errors.length} error:\n${errors.slice(0, 5).join("\n")}`, "error");
+                    setImportPreview(parsed);
+                  };
+                  reader.readAsText(file);
+                }} style={{ width: "100%", padding: "0.5rem", border: `1.5px dashed ${BDR}`, borderRadius: 8, fontSize: "0.8rem", background: BG }} />
+              </div>
+            </div>
+            <div style={{ marginBottom: "1rem" }}>
+              <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: P, textTransform: "uppercase", marginBottom: "0.375rem" }}>Atau Tempel Data</label>
+              <textarea value={importRaw} onChange={e => {
+                setImportRaw(e.target.value);
+                const lines = e.target.value.split("\n").map(l => l.trim()).filter(l => l);
+                const parsed = [];
+                const errors = [];
+                for (let i = 0; i < lines.length; i++) {
+                  const line = lines[i];
+                  if (i === 0 && /tahun/i.test(line)) continue;
+                  let parts = line.split("\t").length > 1 ? line.split("\t") : line.split(",");
+                  parts = parts.map(p => p.replace(/["\r]/g, "").trim());
+                  const nums = parts.filter(p => p !== "").slice(0, 1 + NEW_FIELDS.length).map(p => parseInt(p));
+                  if (nums.length < 1 + NEW_FIELDS.length || nums.some(n => isNaN(n))) { errors.push(`Baris ${i + 1}: data tidak valid`); continue; }
+                  const entry = { tahun: nums[0] };
+                  NEW_FIELDS.forEach((f, idx) => { entry[f.k] = nums[idx + 1] ?? 0; });
+                  parsed.push(entry);
+                }
+                if (errors.length) addToast(`⚠️ ${errors.length} error:\n${errors.slice(0, 5).join("\n")}`, "error");
+                setImportPreview(parsed);
+              }} rows={4} placeholder={`tahun\t${NEW_FIELDS.slice(0, 3).map(f => f.k).join("\t")}\t...\n2017\t141625\t140184\t21121\t...`}
+                style={{ width: "100%", padding: "0.65rem 0.875rem", border: `1.5px solid ${BDR}`, borderRadius: 8, fontSize: "0.8rem", fontFamily: "'JetBrains Mono',monospace", color: T, outline: "none", resize: "vertical", boxSizing: "border-box" }} />
+            </div>
+            {importPreview.length > 0 && (
+              <div style={{ marginBottom: "1rem" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem" }}>
+                  <div style={{ fontSize: "0.78rem", fontWeight: 700, color: T }}>📋 Preview ({importPreview.length} baris)</div>
+                  <button onClick={() => {
+                    importPreview.forEach(r => addPenduduk(r));
+                    addToast(`✅ ${importPreview.length} data sekunder berhasil diimport & tersinkron!`, "success");
+                    setShowImport(false); setImportRaw(""); setImportPreview([]);
+                  }} style={{ background: `linear-gradient(135deg, ${P}, ${PL})`, border: "none", borderRadius: 6, color: W, fontWeight: 700, fontSize: "0.75rem", padding: "0.4rem 1rem", cursor: "pointer" }}>💾 Import {importPreview.length} Data</button>
+                </div>
+                <div style={{ maxHeight: 200, overflow: "auto", border: `1px solid ${BDR}`, borderRadius: 8 }}>
+                  <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.7rem" }}>
+                    <thead><tr style={{ background: `${P}15`, position: "sticky", top: 0 }}>
+                      <th style={{ padding: "0.3rem 0.5rem", textAlign: "left", fontWeight: 700, color: P }}>#</th>
+                      <th style={{ padding: "0.3rem 0.5rem", textAlign: "left", fontWeight: 700, color: P }}>Tahun</th>
+                      {NEW_FIELDS.slice(0, 4).map(f => <th key={f.k} style={{ padding: "0.3rem 0.5rem", textAlign: "right", fontWeight: 700, color: P }}>{f.k}</th>)}
+                      <th style={{ padding: "0.3rem 0.5rem", textAlign: "right", fontWeight: 700, color: P }}>…</th>
+                    </tr></thead>
+                    <tbody>{importPreview.map((r, i) => (
+                      <tr key={i} style={{ background: i % 2 === 0 ? W : BG }}>
+                        <td style={{ padding: "0.25rem 0.5rem", color: M }}>{i + 1}</td>
+                        <td style={{ padding: "0.25rem 0.5rem", fontWeight: 700, color: T }}>{r.tahun}</td>
+                        {NEW_FIELDS.slice(0, 4).map(f => <td key={f.k} style={{ padding: "0.25rem 0.5rem", textAlign: "right", fontFamily: "monospace", color: M }}>{(r[f.k] || 0).toLocaleString()}</td>)}
+                        <td style={{ padding: "0.25rem 0.5rem", textAlign: "right", color: M }}>…</td>
+                      </tr>
+                    ))}</tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: "0.625rem", borderTop: `1px solid ${BDR}`, paddingTop: "1rem" }}>
+              <button onClick={() => setShowImport(false)} style={{ background: W, border: `1.5px solid ${BDR}`, borderRadius: 8, color: M, fontWeight: 600, fontSize: "0.82rem", padding: "0.5rem 1.25rem", cursor: "pointer" }}>Tutup</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
