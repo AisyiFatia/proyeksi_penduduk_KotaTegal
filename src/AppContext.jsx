@@ -413,6 +413,16 @@ export function AppProvider({ children }) {
     });
   }, []);
 
+  const ALL_PENDUDUK_FIELDS = [
+    "jumlah_pindah", "jumlah_datang", "jumlah_kelahiran", "jumlah_kematian",
+    "jml_pria", "jml_perempuan",
+    "umur_0_4", "umur_5_18", "umur_15_64", "umur_65_plus",
+    "penduduk_tegal_selatan", "penduduk_tegal_timur", "penduduk_tegal_barat", "penduduk_margadana",
+    "jml_miskin", "pendapatan_per_kapita", "jml_sekolah", "jml_faskes",
+    "jml_pekerja_formal", "jml_pekerja_informal", "jml_penganggur",
+    "jml_pendidikan_sd", "jml_pendidikan_smp", "jml_pendidikan_sma", "jml_pendidikan_pt",
+  ];
+
   // ══════════════════════════════════════════════════════════
   //  COMPUTED / DERIVED DATA
   // ══════════════════════════════════════════════════════════
@@ -435,16 +445,6 @@ export function AppProvider({ children }) {
       .sort((a, b) => b.tahun - a.tahun)
       .slice(0, n);
   }, [pendudukData]);
-
-  const ALL_PENDUDUK_FIELDS = [
-    "jumlah_pindah", "jumlah_datang", "jumlah_kelahiran", "jumlah_kematian",
-    "jml_pria", "jml_perempuan",
-    "umur_0_4", "umur_5_18", "umur_15_64", "umur_65_plus",
-    "penduduk_tegal_selatan", "penduduk_tegal_timur", "penduduk_tegal_barat", "penduduk_margadana",
-    "jml_miskin", "pendapatan_per_kapita", "jml_sekolah", "jml_faskes",
-    "jml_pekerja_formal", "jml_pekerja_informal", "jml_penganggur",
-    "jml_pendidikan_sd", "jml_pendidikan_smp", "jml_pendidikan_sma", "jml_pendidikan_pt",
-  ];
 
   const getYearlyStats = useCallback(() => {
     const years = [...new Set(pendudukData.map(d => d.tahun))].sort();
