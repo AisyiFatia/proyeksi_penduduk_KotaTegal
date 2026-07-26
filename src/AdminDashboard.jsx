@@ -2369,7 +2369,7 @@ function CapaianAdminPage({ addToast }) {
 //  PROFIL KECAMATAN ADMIN
 // ══════════════════════════════════════════════════════════════
 function ProfilAdminPage({ addToast }) {
-  const { profilKecamatan, updateProfilValue, updateProfilIndikator } = useAppContext();
+  const { profilKecamatan, updateProfilValue } = useAppContext();
   const [editKec, setEditKec] = useState(null);
   const [form, setForm] = useState({});
 
@@ -2381,10 +2381,6 @@ function ProfilAdminPage({ addToast }) {
       kelurahan: d.kelurahan,
       penduduk2024: d.penduduk2024,
       kepadatan: d.kepadatan,
-      tfr: d.indikator.tfr,
-      ahh: d.indikator.ahh,
-      akb: d.indikator.akb,
-      ipm: d.indikator.ipm,
       highlights: d.highlights.join(", "),
     });
   };
@@ -2395,10 +2391,6 @@ function ProfilAdminPage({ addToast }) {
     updateProfilValue(editKec, "kelurahan", parseInt(form.kelurahan) || 0);
     updateProfilValue(editKec, "penduduk2024", parseInt(form.penduduk2024) || 0);
     updateProfilValue(editKec, "kepadatan", parseInt(form.kepadatan) || 0);
-    updateProfilIndikator(editKec, "tfr", parseFloat(form.tfr) || 0);
-    updateProfilIndikator(editKec, "ahh", parseFloat(form.ahh) || 0);
-    updateProfilIndikator(editKec, "akb", parseFloat(form.akb) || 0);
-    updateProfilIndikator(editKec, "ipm", parseFloat(form.ipm) || 0);
     updateProfilValue(editKec, "highlights", form.highlights.split(",").map(s => s.trim()).filter(Boolean));
     addToast(`✅ Profil "${editKec}" diperbarui!`, "success");
     setEditKec(null);
@@ -2423,10 +2415,6 @@ function ProfilAdminPage({ addToast }) {
               { k: "kelurahan", l: "Jumlah Kelurahan", ph: "cth: 7" },
               { k: "penduduk2024", l: "Penduduk 2024", ph: "cth: 72880" },
               { k: "kepadatan", l: "Kepadatan", ph: "cth: 11334" },
-              { k: "tfr", l: "TFR", ph: "cth: 1.82" },
-              { k: "ahh", l: "AHH (Angka Harapan Hidup)", ph: "cth: 74.1" },
-              { k: "akb", l: "AKB (Angka Kematian Bayi)", ph: "cth: 9.1" },
-              { k: "ipm", l: "IPM", ph: "cth: 74.9" },
             ].map(f => (
               <div key={f.k}>
                 <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: P, textTransform: "uppercase", marginBottom: "0.375rem" }}>{f.l}</label>
