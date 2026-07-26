@@ -734,7 +734,6 @@ function DataPendudukPage({ showForm, addToast, onNav }) {
   return (
     <div>
       <ConfirmModal show={deleteId !== null} onConfirm={doDelete} onCancel={() => setDeleteId(null)} />
-      <ClearConfirmModal show={clearConfirm} onConfirm={() => { clearAllPenduduk(); setClearConfirm(false); addToast("Semua data primer dihapus!", "success"); }} onCancel={() => setClearConfirm(false)} />
       <div style={{ marginBottom: "1.5rem", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "0.75rem" }}>
         <h1 style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: "1.4rem", fontWeight: 800, color: T }}>
           {editId ? "✏️ Edit Data Primer" : "👥 Data Primer"}
