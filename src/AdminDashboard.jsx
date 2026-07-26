@@ -170,8 +170,8 @@ const MENU = [
   { id: "dashboard", icon: "🏠", label: "Dashboard" },
   { id: "penduduk-header", icon: "👥", label: "Data Penduduk", header: true },
   { id: "daftar-penduduk", icon: "📋", label: "Daftar Data", indent: true },
-  { id: "tambah-penduduk", icon: "➕", label: "Tambah Data", indent: true },
-  { id: "data-migrasi", icon: "🚚", label: "Data Migrasi", indent: true },
+  { id: "tambah-penduduk", icon: "📋", label: "Data Primer", indent: true },
+  { id: "data-migrasi", icon: "📦", label: "Data Sekunder", indent: true },
   { id: "prediksi-knn", icon: "🔮", label: "Prediksi KNN", indent: true },
   { id: "grafik", icon: "📈", label: "Grafik Penduduk", indent: true },
   { id: "periode-header", icon: "📅", label: "Data Periode", header: true },
@@ -259,8 +259,8 @@ function Sidebar({ active, onNav, user, collapsed, onViewSipenduk }) {
 const BREADCRUMBS = {
   "dashboard": ["Dashboard"],
   "daftar-penduduk": ["Dashboard", "Data Penduduk", "Daftar"],
-  "tambah-penduduk": ["Dashboard", "Data Penduduk", "Tambah"],
-  "data-migrasi": ["Dashboard", "Data Penduduk", "Data Migrasi"],
+  "tambah-penduduk": ["Dashboard", "Data Penduduk", "Data Primer"],
+  "data-migrasi": ["Dashboard", "Data Penduduk", "Data Sekunder"],
   "prediksi-knn": ["Dashboard", "Data Penduduk", "Prediksi KNN"],
   "grafik": ["Dashboard", "Data Penduduk", "Grafik"],
   "daftar-periode": ["Dashboard", "Data Periode", "Daftar"],
@@ -507,7 +507,7 @@ function ImportModalUI({ showImport, setShowImport, importRaw, setImportRaw, imp
         <div style={{ background: `linear-gradient(135deg, #7C3AED, #A855F7)`, padding: "1.25rem 1.5rem", display: "flex", alignItems: "center", gap: "0.75rem" }}>
           <span style={{ fontSize: "1.3rem" }}>📤</span>
           <div style={{ flex: 1 }}>
-            <div style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontWeight: 700, color: W, fontSize: "1rem" }}>Import Data Penduduk</div>
+            <div style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontWeight: 700, color: W, fontSize: "1rem" }}>Import Data Primer</div>
             <div style={{ fontSize: "0.75rem", color: "rgba(255,255,255,0.8)", marginTop: "0.15rem" }}>CSV / tab-separated — kolom: tahun, jml_pria, jml_perempuan, ... (21 field data)</div>
           </div>
           <button onClick={() => setShowImport(false)} style={{ background: "rgba(255,255,255,0.2)", border: "none", borderRadius: 6, color: W, fontSize: "1.1rem", width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>✕</button>
@@ -688,9 +688,9 @@ function DataPendudukPage({ showForm, addToast, onNav }) {
       <div style={{ marginBottom: "1.5rem", display: "flex", alignItems: "center", gap: "1rem", flexWrap: "wrap" }}>
         <button onClick={() => onNav("daftar-penduduk")} style={{ background: BG, border: `1px solid ${BDR}`, borderRadius: 8, color: M, padding: "0.5rem 0.875rem", cursor: "pointer", fontWeight: 600, fontSize: "0.82rem" }}>← Kembali</button>
         <h1 style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: "1.4rem", fontWeight: 800, color: T, flex: 1 }}>
-          {editId ? "✏️ Edit Data Penduduk" : "➕ Tambah Data Penduduk"}
+          {editId ? "✏️ Edit Data Primer" : "📋 Tambah Data Primer"}
         </h1>
-        <button onClick={() => { setShowImport(true); setImportRaw(""); setImportPreview([]); }} style={{ background: `linear-gradient(135deg, #7C3AED, #A855F7)`, border: "none", borderRadius: 8, color: W, fontWeight: 700, fontSize: "0.82rem", padding: "0.6rem 1rem", cursor: "pointer" }}>📤 Import CSV</button>
+          <button onClick={() => { setShowImport(true); setImportRaw(""); setImportPreview([]); }} style={{ background: `linear-gradient(135deg, #7C3AED, #A855F7)`, border: "none", borderRadius: 8, color: W, fontWeight: 700, fontSize: "0.82rem", padding: "0.6rem 1rem", cursor: "pointer" }}>📤 Import CSV Data Primer</button>
       </div>
       {/* Sync notice */}
       <div style={{ background: "#DBEAFE", border: "1.5px solid #2563EB", borderRadius: 8, padding: "0.625rem 1rem", marginBottom: "1rem", fontSize: "0.78rem", color: "#1D4ED8", fontWeight: 600, display: "flex", alignItems: "center", gap: "0.5rem" }}>
@@ -795,7 +795,7 @@ function DataPendudukPage({ showForm, addToast, onNav }) {
     <div>
       <ConfirmModal show={deleteId !== null} onConfirm={doDelete} onCancel={() => setDeleteId(null)} />
       <div style={{ marginBottom: "1.5rem", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "0.75rem" }}>
-        <h1 style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: "1.4rem", fontWeight: 800, color: T }}>👥 Manajemen Data Penduduk</h1>
+        <h1 style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: "1.4rem", fontWeight: 800, color: T }}>👥 Data Primer Penduduk</h1>
         <div style={{ display: "flex", gap: "0.625rem" }}>
           <button onClick={openAdd} style={{ background: `linear-gradient(135deg, ${P}, ${PL})`, border: "none", borderRadius: 8, color: W, fontWeight: 700, fontSize: "0.82rem", padding: "0.6rem 1.25rem", cursor: "pointer" }}>➕ Tambah Data</button>
           <button onClick={() => {
@@ -1943,13 +1943,13 @@ function MigrasiPage({ addToast }) {
   return (
     <div>
       <ConfirmModal show={deleteId !== null} onConfirm={() => { deletePenduduk(deleteId); setDeleteId(null); addToast("Data migrasi dihapus!", "success"); }} onCancel={() => setDeleteId(null)} />
-      <h1 style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: "1.4rem", fontWeight: 800, color: T, marginBottom: "1.25rem" }}>🚚 Data Migrasi Penduduk</h1>
+      <h1 style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: "1.4rem", fontWeight: 800, color: T, marginBottom: "1.25rem" }}>📦 Data Sekunder — Migrasi Penduduk</h1>
       <div style={{ background: "#FFF7ED", border: "1.5px solid #F97316", borderRadius: 8, padding: "0.625rem 1rem", marginBottom: "1.25rem", fontSize: "0.78rem", color: "#9A3412", fontWeight: 600, display: "flex", alignItems: "center", gap: "0.5rem" }}>
-        ℹ️ Data migrasi (pindah, datang, kelahiran, kematian) dipisah dari data pokok penduduk. Keduanya otomatis tergabung di tampilan SIPENDUK User.
+        ℹ️ Data sekunder (pindah, datang, kelahiran, kematian) dipisah dari data primer penduduk. Keduanya otomatis tergabung di tampilan SIPENDUK User.
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1.25rem" }}>
         <div style={{ background: W, border: `1.5px solid ${BDR}`, borderRadius: 12, padding: "1.5rem", boxShadow: "0 2px 10px rgba(0,0,0,0.05)" }}>
-          <div style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: "0.95rem", fontWeight: 700, color: T, marginBottom: "1rem" }}>{editId ? "✏️ Edit" : "➕ Tambah"} Data Migrasi</div>
+          <div style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: "0.95rem", fontWeight: 700, color: T, marginBottom: "1rem" }}>{editId ? "✏️ Edit" : "➕ Tambah"} Data Sekunder</div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
             <div>{inp("id_priode", "Periode")}</div>
             <div>{inp("tahun", "Tahun")}</div>
@@ -1966,11 +1966,11 @@ function MigrasiPage({ addToast }) {
           </div>
         </div>
         <div>
-          <div style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: "0.85rem", fontWeight: 700, color: T, marginBottom: "0.75rem" }}>📋 Data Migrasi Tersimpan</div>
+          <div style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: "0.85rem", fontWeight: 700, color: T, marginBottom: "0.75rem" }}>📋 Data Sekunder Tersimpan</div>
           {migrasiData.length === 0 ? (
             <div style={{ background: W, border: `1.5px solid ${BDR}`, borderRadius: 12, padding: "2rem", textAlign: "center", boxShadow: "0 2px 10px rgba(0,0,0,0.05)" }}>
               <div style={{ fontSize: "2.5rem", marginBottom: "0.5rem" }}>📭</div>
-              <div style={{ fontWeight: 700, color: T }}>Belum ada data migrasi</div>
+              <div style={{ fontWeight: 700, color: T }}>Belum ada data sekunder</div>
               <div style={{ fontSize: "0.78rem", color: M, marginTop: "0.25rem" }}>Gunakan form di samping untuk menambah data</div>
             </div>
           ) : (
