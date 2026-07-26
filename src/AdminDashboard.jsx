@@ -887,9 +887,9 @@ function PrediksiPage() {
     { id: "proyeksi_perempuan", label: "Proyeksi Penduduk Perempuan", satuan: "jiwa", src: "penduduk" },
     { id: "pertumbuhan_penduduk", label: "Proyeksi Pertumbuhan Penduduk", satuan: "%", src: "penduduk" },
     { id: "proyeksi_usia", label: "Proyeksi Penduduk Usia (0-4, 5-18, 15-64, 65+)", satuan: "jiwa", src: "penduduk" },
-    { id: "Kepadatan Penduduk", label: "Proyeksi Kepadatan Penduduk", satuan: "jiwa/km²", src: "indikator" },
+    { id: "kepadatan_penduduk", label: "Proyeksi Kepadatan Penduduk", satuan: "jiwa/km²", src: "penduduk" },
     { id: "proyeksi_sex_ratio", label: "Proyeksi Rasio Jenis Kelamin", satuan: "per 100 perempuan", src: "penduduk" },
-    { id: "Rasio Ketergantungan", label: "Proyeksi Rasio Ketergantungan", satuan: "per 100 produktif", src: "indikator" },
+    { id: "rasio_ketergantungan", label: "Proyeksi Rasio Ketergantungan", satuan: "per 100 produktif", src: "penduduk" },
     { id: "proyeksi_pendidikan", label: "Proyeksi Pendidikan (SD–PT)", satuan: "jiwa", src: "penduduk" },
     { id: "proyeksi_miskin", label: "Proyeksi Penduduk Miskin", satuan: "jiwa", src: "penduduk" },
     { id: "proyeksi_pendapatan", label: "Proyeksi Pendapatan per Kapita", satuan: "ribu Rp", src: "penduduk" },
@@ -902,11 +902,6 @@ function PrediksiPage() {
     { id: "proyeksi_kecamatan_tt", label: "Proyeksi Tegal Timur", satuan: "jiwa", src: "penduduk" },
     { id: "proyeksi_kecamatan_tb", label: "Proyeksi Tegal Barat", satuan: "jiwa", src: "penduduk" },
     { id: "proyeksi_kecamatan_m", label: "Proyeksi Margadana", satuan: "jiwa", src: "penduduk" },
-    { id: "Laju Pertumbuhan Penduduk", label: "Laju Pertumbuhan Penduduk (BPS)", satuan: "% per tahun", src: "indikator" },
-    { id: "TFR (Total Fertility Rate)", label: "Angka Fertilitas (TFR)", satuan: "anak/wanita", src: "indikator" },
-    { id: "Angka Harapan Hidup", label: "Angka Harapan Hidup", satuan: "tahun", src: "indikator" },
-    { id: "Angka Kematian Bayi (AKB)", label: "Angka Kematian Bayi (AKB)", satuan: "per 1.000 lahir", src: "indikator" },
-    { id: "Indeks Pembangunan Manusia (IPM)", label: "Indeks Pembangunan Manusia", satuan: "poin", src: "indikator" },
   ];
   const BASE_POP_2020 = 284116;
   const [selInd, setSelInd] = useState(PENDUDUK_INDIKATOR[0].id);
@@ -947,6 +942,11 @@ function PrediksiPage() {
       if (selInd === "proyeksi_kecamatan_tt") return sortedStats.map(s => ({ tahun: s.tahun, nilai: s.penduduk_tegal_timur || 0 }));
       if (selInd === "proyeksi_kecamatan_tb") return sortedStats.map(s => ({ tahun: s.tahun, nilai: s.penduduk_tegal_barat || 0 }));
       if (selInd === "proyeksi_kecamatan_m") return sortedStats.map(s => ({ tahun: s.tahun, nilai: s.penduduk_margadana || 0 }));
+      if (selInd === "kepadatan_penduduk") return sortedStats.map(s => ({ tahun: s.tahun, nilai: s.jml_pria || s.jml_perempuan ? parseFloat((((s.jml_pria || 0) + (s.jml_perempuan || 0)) / 39.68).toFixed(2)) : 0 }));
+      if (selInd === "rasio_ketergantungan") return sortedStats.map(s => {
+        const produktif = s.umur_15_64 || 0;
+        return { tahun: s.tahun, nilai: produktif ? parseFloat((((s.umur_0_4 || 0) + (s.umur_65_plus || 0)) / produktif * 100).toFixed(2)) : 0 };
+      });
       if (selInd === "pertumbuhan_penduduk") {
         let hasil = [];
         if (sortedStats.length) {
@@ -970,10 +970,6 @@ function PrediksiPage() {
         return hasil;
       }
       return [];
-    }
-    if (src === "indikator") {
-      const raw = indikatorData[selInd]?.data?.["Kota Tegal (Kota)"] || [];
-      return raw.map(d => ({ tahun: d.tahun, nilai: d.nilai }));
     }
     return [];
   };

@@ -413,7 +413,7 @@ export function AppProvider({ children }) {
     });
   }, []);
 
-  const ALL_PENDUDUK_FIELDS = [
+  const ALL_PENDUDUK_FIELDS = useMemo(() => [
     "jumlah_pindah", "jumlah_datang", "jumlah_kelahiran", "jumlah_kematian",
     "jml_pria", "jml_perempuan",
     "umur_0_4", "umur_5_18", "umur_15_64", "umur_65_plus",
@@ -421,7 +421,7 @@ export function AppProvider({ children }) {
     "jml_miskin", "pendapatan_per_kapita", "jml_sekolah", "jml_faskes",
     "jml_pekerja_formal", "jml_pekerja_informal", "jml_penganggur",
     "jml_pendidikan_sd", "jml_pendidikan_smp", "jml_pendidikan_sma", "jml_pendidikan_pt",
-  ];
+  ], []);
 
   // ══════════════════════════════════════════════════════════
   //  COMPUTED / DERIVED DATA
