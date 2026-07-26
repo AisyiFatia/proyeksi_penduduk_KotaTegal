@@ -417,20 +417,17 @@ export function AppProvider({ children }) {
   //  COMPUTED / DERIVED DATA
   // ══════════════════════════════════════════════════════════
   const getSummaryStats = useCallback(() => {
-    const t = pendudukData.reduce(
-      (a, d) => ({
-        pindah: a.pindah + d.jumlah_pindah,
-        datang: a.datang + d.jumlah_datang,
-        lahir:  a.lahir  + d.jumlah_kelahiran,
-        mati:   a.mati   + d.jumlah_kematian,
-      }),
-      { pindah: 0, datang: 0, lahir: 0, mati: 0 }
-    );
-    return {
-      ...t,
-      pertumbuhan: t.datang + t.lahir - t.pindah - t.mati,
-      total: pendudukData.length,
-    };
+    const init = { jumlah_pindah: 0, jumlah_datang: 0, jumlah_kelahiran: 0, jumlah_kematian: 0 };
+    ALL_PENDUDUK_FIELDS.forEach(f => { init[f] = 0; });
+    const t = pendudukData.reduce((a, d) => {
+      ALL_PENDUDUK_FIELDS.forEach(f => { a[f] += d[f] || 0; });
+      return a;
+    }, { ...init });
+    const pindah = t.jumlah_pindah;
+    const datang = t.jumlah_datang;
+    const lahir = t.jumlah_kelahiran;
+    const mati = t.jumlah_kematian;
+    return { ...t, pindah, datang, lahir, mati, pertumbuhan: datang + lahir - pindah - mati, total: pendudukData.length };
   }, [pendudukData]);
 
   const getLatestData = useCallback((n = 6) => {
@@ -439,18 +436,27 @@ export function AppProvider({ children }) {
       .slice(0, n);
   }, [pendudukData]);
 
+  const ALL_PENDUDUK_FIELDS = [
+    "jumlah_pindah", "jumlah_datang", "jumlah_kelahiran", "jumlah_kematian",
+    "jml_pria", "jml_perempuan",
+    "umur_0_4", "umur_5_18", "umur_15_64", "umur_65_plus",
+    "penduduk_tegal_selatan", "penduduk_tegal_timur", "penduduk_tegal_barat", "penduduk_margadana",
+    "jml_miskin", "pendapatan_per_kapita", "jml_sekolah", "jml_faskes",
+    "jml_pekerja_formal", "jml_pekerja_informal", "jml_penganggur",
+    "jml_pendidikan_sd", "jml_pendidikan_smp", "jml_pendidikan_sma", "jml_pendidikan_pt",
+  ];
+
   const getYearlyStats = useCallback(() => {
     const years = [...new Set(pendudukData.map(d => d.tahun))].sort();
     return years.map(y => {
       const rows = pendudukData.filter(d => d.tahun === y);
-      return {
-        tahun: y,
-        pindah:  rows.reduce((s, d) => s + d.jumlah_pindah, 0),
-        datang:  rows.reduce((s, d) => s + d.jumlah_datang, 0),
-        lahir:   rows.reduce((s, d) => s + d.jumlah_kelahiran, 0),
-        mati:    rows.reduce((s, d) => s + d.jumlah_kematian, 0),
-        records: rows.length,
-      };
+      const entry = { tahun: y, records: rows.length };
+      ALL_PENDUDUK_FIELDS.forEach(f => { entry[f] = rows.reduce((s, d) => s + (d[f] || 0), 0); });
+      entry.pindah = entry.jumlah_pindah;
+      entry.datang = entry.jumlah_datang;
+      entry.lahir = entry.jumlah_kelahiran;
+      entry.mati = entry.jumlah_kematian;
+      return entry;
     });
   }, [pendudukData]);
 
