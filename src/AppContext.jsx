@@ -253,6 +253,14 @@ export function AppProvider({ children }) {
         jumlah_datang: r.jumlah_datang || 0,
         jumlah_kelahiran: r.jumlah_kelahiran || 0,
         jumlah_kematian: r.jumlah_kematian || 0,
+        sd: r.sd || 0,
+        smp: r.smp || 0,
+        sma: r.sma || 0,
+        pt: r.pt || 0,
+        balita: r.balita || 0,
+        sekolah: r.sekolah || 0,
+        produktif: r.produktif || 0,
+        lansia: r.lansia || 0,
       }));
       api.bulkAddPenduduk(entries);
       return [...prev, ...entries];

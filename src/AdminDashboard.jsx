@@ -468,7 +468,7 @@ function DashboardPage({ onNav }) {
 // ══════════════════════════════════════════════════════════════
 //  DATA PENDUDUK — DAFTAR & FORM
 // ══════════════════════════════════════════════════════════════
-const emptyForm = { id_priode: 1, tahun: 2024, jumlah_pindah: "", jumlah_datang: "", jumlah_kelahiran: "", jumlah_kematian: "" };
+const emptyForm = { id_priode: 1, tahun: 2024, jumlah_pindah: "", jumlah_datang: "", jumlah_kelahiran: "", jumlah_kematian: "", sd: "", smp: "", sma: "", pt: "", balita: "", sekolah: "", produktif: "", lansia: "" };
 
 
 
@@ -516,10 +516,10 @@ function ImportModalUI({ showImport, setShowImport, importRaw, setImportRaw, imp
               parts = parts.map(p => p.replace(/["\r]/g, "").trim());
               const nums = parts.filter(p => p !== "").slice(-5).map(p => parseInt(p));
               if (nums.length < 4 || nums.some(n => isNaN(n))) { errors.push(`Baris ${i + 1}: data tidak valid`); return; }
-              const [tahun, pindah, datang, lahir, mati] = nums.length === 5 ? nums : [nums[0], nums[1], nums[2], nums[3], 0];
+              let [tahun, pindah, datang, lahir, mati, sd, smp, sma, pt, balita, sekolah, produktif, lansia] = nums.length >= 5 ? nums : [nums[0], nums[1], nums[2], nums[3], 0, ...nums.slice(5)];
               if (isNaN(tahun) || tahun < 1996) { errors.push(`Baris ${i + 1}: tahun tidak valid`); return; }
               if (isNaN(pindah) || isNaN(datang) || isNaN(lahir) || isNaN(mati)) { errors.push(`Baris ${i + 1}: nilai numerik tidak valid`); return; }
-              parsed.push({ tahun, jumlah_pindah: pindah, jumlah_datang: datang, jumlah_kelahiran: lahir, jumlah_kematian: mati });
+              parsed.push({ tahun, jumlah_pindah: pindah, jumlah_datang: datang, jumlah_kelahiran: lahir, jumlah_kematian: mati, sd: sd ?? 0, smp: smp ?? 0, sma: sma ?? 0, pt: pt ?? 0, balita: balita ?? 0, sekolah: sekolah ?? 0, produktif: produktif ?? 0, lansia: lansia ?? 0 });
             });
             if (errors.length) {
               addToast(`⚠️ ${errors.length} error:\n${errors.slice(0, 5).join("\n")}`, "error");
@@ -613,7 +613,8 @@ function DataPendudukPage({ showForm, addToast, onNav }) {
   const handleSubmit = () => {
     const e = validate();
     if (Object.keys(e).length) { setFormErrors(e); return; }
-    const row = { ...form, jumlah_pindah: +form.jumlah_pindah, jumlah_datang: +form.jumlah_datang, jumlah_kelahiran: +form.jumlah_kelahiran, jumlah_kematian: +form.jumlah_kematian };
+    const toNum = (v) => v === "" ? 0 : +v;
+    const row = { ...form, jumlah_pindah: +form.jumlah_pindah, jumlah_datang: +form.jumlah_datang, jumlah_kelahiran: +form.jumlah_kelahiran, jumlah_kematian: +form.jumlah_kematian, sd: toNum(form.sd), smp: toNum(form.smp), sma: toNum(form.sma), pt: toNum(form.pt), balita: toNum(form.balita), sekolah: toNum(form.sekolah), produktif: toNum(form.produktif), lansia: toNum(form.lansia) };
     if (editId) {
       updatePenduduk(editId, row);
       addToast("✅ Data diperbarui & tersinkron ke SIPENDUK User!", "success");
@@ -677,6 +678,28 @@ function DataPendudukPage({ showForm, addToast, onNav }) {
             {inp("jumlah_kelahiran", "Jumlah Kelahiran")}
             {inp("jumlah_kematian", "Jumlah Kematian")}
           </div>
+        </div>
+        <hr style={{ border: "none", borderTop: `1px solid ${BDR}`, margin: "1.25rem 0" }} />
+        <div style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: "0.85rem", fontWeight: 700, color: P, marginBottom: "1rem" }}>📚 Proyeksi Pendidikan (opsional)</div>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: "1rem" }}>
+          {[{ k: "sd", l: "SD" }, { k: "smp", l: "SMP" }, { k: "sma", l: "SMA" }, { k: "pt", l: "PT" }].map(f => (
+            <div key={f.k}>
+              <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: M, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "0.375rem" }}>{f.l}</label>
+              <input type="number" value={form[f.k]} onChange={e => setForm(p => ({ ...p, [f.k]: e.target.value }))} min={0} placeholder="0"
+                style={{ width: "100%", padding: "0.65rem 0.875rem", border: `1.5px solid ${BDR}`, borderRadius: 8, fontFamily: "'Inter',sans-serif", fontSize: "0.85rem", color: T, outline: "none", boxSizing: "border-box" }} />
+            </div>
+          ))}
+        </div>
+        <hr style={{ border: "none", borderTop: `1px solid ${BDR}`, margin: "1.25rem 0" }} />
+        <div style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: "0.85rem", fontWeight: 700, color: P, marginBottom: "1rem" }}>👶 Proyeksi Usia (opsional)</div>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: "1rem" }}>
+          {[{ k: "balita", l: "Balita (0-4)" }, { k: "sekolah", l: "Sekolah (5-18)" }, { k: "produktif", l: "Produktif (15-64)" }, { k: "lansia", l: "Lansia (≥65)" }].map(f => (
+            <div key={f.k}>
+              <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: M, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "0.375rem" }}>{f.l}</label>
+              <input type="number" value={form[f.k]} onChange={e => setForm(p => ({ ...p, [f.k]: e.target.value }))} min={0} placeholder="0"
+                style={{ width: "100%", padding: "0.65rem 0.875rem", border: `1.5px solid ${BDR}`, borderRadius: 8, fontFamily: "'Inter',sans-serif", fontSize: "0.85rem", color: T, outline: "none", boxSizing: "border-box" }} />
+            </div>
+          ))}
         </div>
         <hr style={{ border: "none", borderTop: `1px solid ${BDR}`, margin: "1.25rem 0" }} />
         <div style={{ display: "flex", gap: "0.875rem" }}>
@@ -758,7 +781,7 @@ function DataPendudukPage({ showForm, addToast, onNav }) {
         <div style={{ display: "flex", gap: "0.625rem" }}>
           <button onClick={openAdd} style={{ background: `linear-gradient(135deg, ${P}, ${PL})`, border: "none", borderRadius: 8, color: W, fontWeight: 700, fontSize: "0.82rem", padding: "0.6rem 1.25rem", cursor: "pointer" }}>➕ Tambah Data</button>
           <button onClick={() => {
-            const rows = pendudukData.map(d => ({ ID: d.id_penduduk, Periode: d.id_priode, Tahun: d.tahun, Pindah: d.jumlah_pindah, Datang: d.jumlah_datang, Kelahiran: d.jumlah_kelahiran, Kematian: d.jumlah_kematian }));
+            const rows = pendudukData.map(d => ({ ID: d.id_penduduk, Periode: d.id_priode, Tahun: d.tahun, Pindah: d.jumlah_pindah, Datang: d.jumlah_datang, Kelahiran: d.jumlah_kelahiran, Kematian: d.jumlah_kematian, SD: d.sd ?? 0, SMP: d.smp ?? 0, SMA: d.sma ?? 0, PT: d.pt ?? 0, Balita: d.balita ?? 0, Sekolah: d.sekolah ?? 0, Produktif: d.produktif ?? 0, Lansia: d.lansia ?? 0 }));
             const header = Object.keys(rows[0] || {});
             const csv = [header.join(","), ...rows.map(r => header.map(h => r[h]).join(","))].join("\n");
             const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
@@ -783,7 +806,7 @@ function DataPendudukPage({ showForm, addToast, onNav }) {
         <div style={{ overflowX: "auto" }}>
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.8rem" }}>
             <thead><tr style={{ background: `linear-gradient(135deg, ${P}, ${PL})` }}>
-              {["Aksi", "No", "ID", "Tahun", "Pindah", "Datang", "Kelahiran", "Kematian"].map(h => (
+              {["Aksi", "No", "ID", "Tahun", "Pindah", "Datang", "Kelahiran", "Kematian", "SD", "SMP", "SMA", "PT", "Balita", "Sekolah", "Produktif", "Lansia"].map(h => (
                 <th key={h} style={{ padding: "0.75rem 0.875rem", textAlign: "left", color: W, fontWeight: 700, fontSize: "0.67rem", textTransform: "uppercase", letterSpacing: "0.05em", whiteSpace: "nowrap" }}>{h}</th>
               ))}
             </tr></thead>
@@ -809,6 +832,14 @@ function DataPendudukPage({ showForm, addToast, onNav }) {
                   <td style={{ padding: "0.55rem 0.875rem", fontFamily: "monospace", fontWeight: 600, color: SUC }}>{d.jumlah_datang.toLocaleString()}</td>
                   <td style={{ padding: "0.55rem 0.875rem", fontFamily: "monospace", fontWeight: 600, color: "#2563EB" }}>{d.jumlah_kelahiran.toLocaleString()}</td>
                   <td style={{ padding: "0.55rem 0.875rem", fontFamily: "monospace", fontWeight: 600, color: WRN }}>{d.jumlah_kematian.toLocaleString()}</td>
+                  <td style={{ padding: "0.55rem 0.875rem", fontFamily: "monospace", color: M }}>{(d.sd ?? 0).toLocaleString()}</td>
+                  <td style={{ padding: "0.55rem 0.875rem", fontFamily: "monospace", color: M }}>{(d.smp ?? 0).toLocaleString()}</td>
+                  <td style={{ padding: "0.55rem 0.875rem", fontFamily: "monospace", color: M }}>{(d.sma ?? 0).toLocaleString()}</td>
+                  <td style={{ padding: "0.55rem 0.875rem", fontFamily: "monospace", color: M }}>{(d.pt ?? 0).toLocaleString()}</td>
+                  <td style={{ padding: "0.55rem 0.875rem", fontFamily: "monospace", color: M }}>{(d.balita ?? 0).toLocaleString()}</td>
+                  <td style={{ padding: "0.55rem 0.875rem", fontFamily: "monospace", color: M }}>{(d.sekolah ?? 0).toLocaleString()}</td>
+                  <td style={{ padding: "0.55rem 0.875rem", fontFamily: "monospace", color: M }}>{(d.produktif ?? 0).toLocaleString()}</td>
+                  <td style={{ padding: "0.55rem 0.875rem", fontFamily: "monospace", color: M }}>{(d.lansia ?? 0).toLocaleString()}</td>
                 </tr>
               ))}
             </tbody>
@@ -914,7 +945,7 @@ function PrediksiPage() {
     { id: "pertumbuhan_penduduk", label: "Proyeksi Pertumbuhan Penduduk", satuan: "%", src: "penduduk" },
     { id: "proyeksi_laki", label: "Proyeksi Jumlah Penduduk Laki-laki", satuan: "jiwa", src: "dummy" },
     { id: "proyeksi_perempuan", label: "Proyeksi Jumlah Penduduk Perempuan", satuan: "jiwa", src: "dummy" },
-    { id: "proyeksi_usia", label: "Proyeksi Penduduk Usia (Balita–Lansia)", satuan: "jiwa", src: "dummy" },
+    { id: "proyeksi_usia", label: "Proyeksi Penduduk Usia (Balita–Lansia)", satuan: "jiwa", src: "penduduk" },
     { id: "Kepadatan Penduduk", label: "Proyeksi Kepadatan Penduduk", satuan: "jiwa/km²", src: "indikator" },
     { id: "proyeksi_sex_ratio", label: "Proyeksi Rasio Jenis Kelamin (Sex Ratio)", satuan: "per 100 perempuan", src: "dummy" },
     { id: "Rasio Ketergantungan", label: "Proyeksi Rasio Ketergantungan (Dependency Ratio)", satuan: "per 100 produktif", src: "indikator" },
@@ -932,7 +963,7 @@ function PrediksiPage() {
     { id: "Angka Harapan Hidup", label: "Angka Harapan Hidup", satuan: "tahun", src: "indikator" },
     { id: "Angka Kematian Bayi (AKB)", label: "Angka Kematian Bayi (AKB)", satuan: "per 1.000 lahir", src: "indikator" },
     { id: "Indeks Pembangunan Manusia (IPM)", label: "Indeks Pembangunan Manusia", satuan: "poin", src: "indikator" },
-    { id: "proyeksi_pendidikan", label: "Proyeksi Pendidikan (SD–PT)", satuan: "jiwa", src: "dummy" },
+    { id: "proyeksi_pendidikan", label: "Proyeksi Pendidikan (SD–PT)", satuan: "jiwa", src: "penduduk" },
     { id: "tingkat_pengangguran", label: "Tingkat Pengangguran", satuan: "%", src: "dummy" },
     { id: "pendapatan_per_kapita", label: "Pendapatan per Kapita", satuan: "ribu Rp", src: "dummy" },
     { id: "tingkat_kemiskinan", label: "Tingkat Kemiskinan", satuan: "%", src: "dummy" },
@@ -983,6 +1014,20 @@ function PrediksiPage() {
         }
         hasil.sort((a, b) => a.tahun - b.tahun);
         return hasil;
+      }
+      if (selInd === "proyeksi_pendidikan") {
+        const tahunMap = {};
+        for (const s of sortedStats) {
+          tahunMap[s.tahun] = (s.sd || 0) + (s.smp || 0) + (s.sma || 0) + (s.pt || 0);
+        }
+        return Object.entries(tahunMap).sort((a, b) => a[0] - b[0]).map(([tahun, nilai]) => ({ tahun: +tahun, nilai }));
+      }
+      if (selInd === "proyeksi_usia") {
+        const tahunMap = {};
+        for (const s of sortedStats) {
+          tahunMap[s.tahun] = (s.balita || 0) + (s.sekolah || 0) + (s.produktif || 0) + (s.lansia || 0);
+        }
+        return Object.entries(tahunMap).sort((a, b) => a[0] - b[0]).map(([tahun, nilai]) => ({ tahun: +tahun, nilai }));
       }
       const fld = selInd.replace("jumlah_", "").toLowerCase();
       const mapFld = { kelahiran: "lahir", kematian: "mati" };
@@ -1273,21 +1318,35 @@ PENTING: Jawab HANYA dalam format JSON berikut, tanpa teks tambahan, tanpa markd
 
               {(selInd === "proyeksi_pendidikan" || selInd === "proyeksi_usia") && (() => {
                 const isUsia = selInd === "proyeksi_usia";
-                const keys = isUsia ? ["proyeksi_balita", "proyeksi_usia_sekolah", "proyeksi_usia_produktif", "proyeksi_lansia"] : ["proyeksi_pendidikan_sd", "proyeksi_pendidikan_smp", "proyeksi_pendidikan_sma", "proyeksi_pendidikan_pt"];
+                const fields = isUsia ? ["balita", "sekolah", "produktif", "lansia"] : ["sd", "smp", "sma", "pt"];
                 const labels = isUsia ? ["Balita (0–4)", "Sekolah (5–18)", "Produktif (15–64)", "Lansia (≥65)"] : ["SD", "SMP", "SMA", "PT"];
                 const colors = isUsia ? ["#0D9488", "#2563EB", "#D97706", "#7C3AED"] : ["#0D9488", "#2563EB", "#D97706", "#7C3AED"];
-                const getVal = (id, tahun) => { const d = DUMMY_DATA[id]?.data?.find(x => x.t === tahun); return d ? d.v : null; };
+                const getFieldSum = (field, tahun) => sortedStats.filter(s => s.tahun === tahun).reduce((sum, s) => sum + (s[field] || 0), 0);
+                const getPred = (field, year) => {
+                  const vals = sortedStats.map(s => s[field] || 0);
+                  if (vals.length < 2) return 0;
+                  const targetYear = year;
+                  const lastYear = sortedStats[sortedStats.length - 1]?.tahun;
+                  if (targetYear <= lastYear) return getFieldSum(field, targetYear);
+                  let result = [...vals];
+                  for (let y = lastYear + 1; y <= targetYear; y++) {
+                    const pred = knnPredict(result, Math.min(3, result.length - 1));
+                    result.push(pred);
+                  }
+                  return result[result.length - 1];
+                };
                 return (
                   <div style={{ display: "flex", gap: "0.75rem", padding: "0 1.5rem 1.5rem", flexWrap: "wrap" }}>
-                    {keys.map((key, i) => {
-                      const v2024 = getVal(key, 2024);
-                      const v2030 = getVal(key, 2030);
-                      const v2035 = getVal(key, 2035);
+                    {fields.map((field, i) => {
+                      const src24 = getFieldSum(field, 2024);
+                      const v2024 = src24 > 0 ? src24 : getPred(field, 2024);
+                      const v2030 = getPred(field, 2030);
+                      const v2035 = getPred(field, 2035);
                       return ["2024", "2030", "2035"].map((tahun, j) => {
                         const val = tahun === "2024" ? v2024 : tahun === "2030" ? v2030 : v2035;
-                        if (val == null) return null;
+                        if (val == null || val === 0) return null;
                         return (
-                          <div key={`${key}-${tahun}`} style={{ flex: 1, minWidth: 100, textAlign: "center", background: BG, border: `1.5px solid ${colors[i]}40`, borderRadius: 10, padding: "0.625rem 0.75rem" }}>
+                          <div key={`${field}-${tahun}`} style={{ flex: 1, minWidth: 100, textAlign: "center", background: BG, border: `1.5px solid ${colors[i]}40`, borderRadius: 10, padding: "0.625rem 0.75rem" }}>
                             <div style={{ fontSize: "0.6rem", fontWeight: 700, color: colors[i], textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "0.15rem" }}>{labels[i]} {tahun}</div>
                             <div style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: "1rem", fontWeight: 800, color: colors[i] }}>{formatNilai(val)}</div>
                           </div>
@@ -1771,11 +1830,10 @@ function AdminPage({ addToast, currentUser }) {
 //  PROFILE PAGE — Profil Admin yang Login
 // ══════════════════════════════════════════════════════════════
 function ProfilePage({ user, addToast }) {
-  const { adminUsers, updateAdminUser } = useAppContext();
+  const { adminUsers } = useAppContext();
   const admin = adminUsers.find(a => a.username === user?.username);
   const [formPw, setFormPw] = useState({ lama: "", baru: "", konfirm: "" });
   const [showPw, setShowPw] = useState({ lama: false, baru: false, konfirm: false });
-  const [submitting, setSubmitting] = useState(false);
 
   const pwStrength = (pw) => {
     if (!pw) return { score: 0, label: "", color: M };
@@ -1861,9 +1919,9 @@ function ProfilePage({ user, addToast }) {
             </div>
           ))}
 
-          <button onClick={handleChangePassword} disabled={submitting}
-            style={{ width: "100%", background: `linear-gradient(135deg, ${P}, ${PL})`, border: "none", borderRadius: 8, color: W, fontWeight: 700, fontSize: "0.88rem", padding: "0.75rem 1.5rem", cursor: "pointer", opacity: submitting ? 0.6 : 1, marginTop: "0.5rem" }}>
-            {submitting ? "⏳ Menyimpan..." : "🔐 Simpan Password Baru"}
+          <button onClick={handleChangePassword}
+            style={{ width: "100%", background: `linear-gradient(135deg, ${P}, ${PL})`, border: "none", borderRadius: 8, color: W, fontWeight: 700, fontSize: "0.88rem", padding: "0.75rem 1.5rem", cursor: "pointer", marginTop: "0.5rem" }}>
+            🔐 Simpan Password Baru
           </button>
         </div>
       </div>
