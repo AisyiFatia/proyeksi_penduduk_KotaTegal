@@ -427,8 +427,8 @@ export function AppProvider({ children }) {
     const datang = t.jumlah_datang;
     const lahir = t.jumlah_kelahiran;
     const mati = t.jumlah_kematian;
-    return { ...t, pindah, datang, lahir, mati, pertumbuhan: datang + lahir - pindah - mati, total: pendudukData.length };
-  }, [pendudukData]);
+    return { ...t, pindah, datang, lahir, mati, pertumbuhan: datang + lahir - pindah - mati, total: pendudukData.length || 0 };
+  }, [pendudukData, ALL_PENDUDUK_FIELDS]);
 
   const getLatestData = useCallback((n = 6) => {
     return [...pendudukData]
@@ -458,7 +458,7 @@ export function AppProvider({ children }) {
       entry.mati = entry.jumlah_kematian;
       return entry;
     });
-  }, [pendudukData]);
+  }, [pendudukData, ALL_PENDUDUK_FIELDS]);
 
   const value = {
     // State

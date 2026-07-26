@@ -444,10 +444,10 @@ function DashboardPage({ onNav }) {
               <tr key={d.id_penduduk} style={{ background: i % 2 === 0 ? W : BG }}>
                 <td style={{ padding: "0.55rem 0.875rem", color: M }}>{i + 1}</td>
                 <td style={{ padding: "0.55rem 0.875rem", fontWeight: 700, color: T }}>{d.tahun}</td>
-                <td style={{ padding: "0.55rem 0.875rem", fontFamily: "monospace", color: DNG, fontWeight: 600 }}>{d.jumlah_pindah.toLocaleString()}</td>
-                <td style={{ padding: "0.55rem 0.875rem", fontFamily: "monospace", color: SUC, fontWeight: 600 }}>{d.jumlah_datang.toLocaleString()}</td>
-                <td style={{ padding: "0.55rem 0.875rem", fontFamily: "monospace", color: "#2563EB", fontWeight: 600 }}>{d.jumlah_kelahiran.toLocaleString()}</td>
-                <td style={{ padding: "0.55rem 0.875rem", fontFamily: "monospace", color: WRN, fontWeight: 600 }}>{d.jumlah_kematian.toLocaleString()}</td>
+                <td style={{ padding: "0.55rem 0.875rem", fontFamily: "monospace", color: DNG, fontWeight: 600 }}>{(d.jumlah_pindah || 0).toLocaleString()}</td>
+                <td style={{ padding: "0.55rem 0.875rem", fontFamily: "monospace", color: SUC, fontWeight: 600 }}>{(d.jumlah_datang || 0).toLocaleString()}</td>
+                <td style={{ padding: "0.55rem 0.875rem", fontFamily: "monospace", color: "#2563EB", fontWeight: 600 }}>{(d.jumlah_kelahiran || 0).toLocaleString()}</td>
+                <td style={{ padding: "0.55rem 0.875rem", fontFamily: "monospace", color: WRN, fontWeight: 600 }}>{(d.jumlah_kematian || 0).toLocaleString()}</td>
               </tr>
             ))}</tbody>
           </table>
@@ -813,10 +813,10 @@ function DataPendudukPage({ showForm, addToast, onNav }) {
                   <td style={{ padding: "0.55rem 0.875rem", color: M }}>{(page - 1) * PER_PAGE + i + 1}</td>
                   <td style={{ padding: "0.55rem 0.875rem", fontFamily: "monospace", color: P, fontWeight: 700 }}>#{d.id_penduduk}</td>
                   <td style={{ padding: "0.55rem 0.875rem", fontWeight: 700, color: T }}>{d.tahun}</td>
-                  <td style={{ padding: "0.55rem 0.875rem", fontFamily: "monospace", fontWeight: 600, color: DNG }}>{d.jumlah_pindah.toLocaleString()}</td>
-                  <td style={{ padding: "0.55rem 0.875rem", fontFamily: "monospace", fontWeight: 600, color: SUC }}>{d.jumlah_datang.toLocaleString()}</td>
-                  <td style={{ padding: "0.55rem 0.875rem", fontFamily: "monospace", fontWeight: 600, color: "#2563EB" }}>{d.jumlah_kelahiran.toLocaleString()}</td>
-                  <td style={{ padding: "0.55rem 0.875rem", fontFamily: "monospace", fontWeight: 600, color: WRN }}>{d.jumlah_kematian.toLocaleString()}</td>
+                  <td style={{ padding: "0.55rem 0.875rem", fontFamily: "monospace", fontWeight: 600, color: DNG }}>{(d.jumlah_pindah || 0).toLocaleString()}</td>
+                  <td style={{ padding: "0.55rem 0.875rem", fontFamily: "monospace", fontWeight: 600, color: SUC }}>{(d.jumlah_datang || 0).toLocaleString()}</td>
+                  <td style={{ padding: "0.55rem 0.875rem", fontFamily: "monospace", fontWeight: 600, color: "#2563EB" }}>{(d.jumlah_kelahiran || 0).toLocaleString()}</td>
+                  <td style={{ padding: "0.55rem 0.875rem", fontFamily: "monospace", fontWeight: 600, color: WRN }}>{(d.jumlah_kematian || 0).toLocaleString()}</td>
                 </tr>
               ))}
             </tbody>
@@ -2158,15 +2158,19 @@ function LaporanPage({ addToast }) {
             </tr></thead>
             <tbody>
               {filtered.map((d, i) => {
-                const t = d.jumlah_datang + d.jumlah_kelahiran - d.jumlah_pindah - d.jumlah_kematian;
+                const datang = d.jumlah_datang || 0;
+                const lahir = d.jumlah_kelahiran || 0;
+                const pindah = d.jumlah_pindah || 0;
+                const mati = d.jumlah_kematian || 0;
+                const t = datang + lahir - pindah - mati;
                 return (
                   <tr key={d.id_penduduk} style={{ background: i % 2 === 0 ? W : BG }}>
                     <td style={{ padding: "0.5rem 0.875rem", color: M }}>{i + 1}</td>
                     <td style={{ padding: "0.5rem 0.875rem", fontWeight: 700, color: T }}>{d.tahun}</td>
-                    <td style={{ padding: "0.5rem 0.875rem", fontFamily: "monospace", color: DNG }}>{d.jumlah_pindah.toLocaleString()}</td>
-                    <td style={{ padding: "0.5rem 0.875rem", fontFamily: "monospace", color: SUC }}>{d.jumlah_datang.toLocaleString()}</td>
-                    <td style={{ padding: "0.5rem 0.875rem", fontFamily: "monospace", color: "#2563EB" }}>{d.jumlah_kelahiran.toLocaleString()}</td>
-                    <td style={{ padding: "0.5rem 0.875rem", fontFamily: "monospace", color: WRN }}>{d.jumlah_kematian.toLocaleString()}</td>
+                    <td style={{ padding: "0.5rem 0.875rem", fontFamily: "monospace", color: DNG }}>{pindah.toLocaleString()}</td>
+                    <td style={{ padding: "0.5rem 0.875rem", fontFamily: "monospace", color: SUC }}>{datang.toLocaleString()}</td>
+                    <td style={{ padding: "0.5rem 0.875rem", fontFamily: "monospace", color: "#2563EB" }}>{lahir.toLocaleString()}</td>
+                    <td style={{ padding: "0.5rem 0.875rem", fontFamily: "monospace", color: WRN }}>{mati.toLocaleString()}</td>
                     <td style={{ padding: "0.5rem 0.875rem", fontFamily: "monospace", fontWeight: 700, color: t > 0 ? SUC : DNG }}>{t > 0 ? "+" : ""}{t.toLocaleString()}</td>
                   </tr>
                 );
