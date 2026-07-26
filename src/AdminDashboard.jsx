@@ -643,7 +643,7 @@ function DataPendudukPage({ showForm, addToast, onNav }) {
       addPenduduk(row);
       addToast("✅ Data ditambahkan & tersinkron ke SIPENDUK User!", "success");
     }
-    onNav("daftar-penduduk");
+    setEditId(null); setForm(emptyForm); setFormErrors({});
   };
 
   const doDelete = () => {
@@ -673,58 +673,7 @@ function DataPendudukPage({ showForm, addToast, onNav }) {
     );
   };
 
-  // FORM VIEW
-  if (showForm) return (
-    <div>
-      <div style={{ marginBottom: "1.5rem", display: "flex", alignItems: "center", gap: "1rem", flexWrap: "wrap" }}>
-        <button onClick={() => onNav("daftar-penduduk")} style={{ background: BG, border: `1px solid ${BDR}`, borderRadius: 8, color: M, padding: "0.5rem 0.875rem", cursor: "pointer", fontWeight: 600, fontSize: "0.82rem" }}>← Kembali</button>
-        <h1 style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: "1.4rem", fontWeight: 800, color: T, flex: 1 }}>
-          {editId ? "✏️ Edit Data Primer" : "📋 Tambah Data Primer"}
-        </h1>
-          <button onClick={() => { setShowImport(true); setImportRaw(""); setImportPreview([]); }} style={{ background: `linear-gradient(135deg, #7C3AED, #A855F7)`, border: "none", borderRadius: 8, color: W, fontWeight: 700, fontSize: "0.82rem", padding: "0.6rem 1rem", cursor: "pointer" }}>📤 Import CSV Data Primer</button>
-      </div>
-      {/* Sync notice */}
-      <div style={{ background: "#DBEAFE", border: "1.5px solid #2563EB", borderRadius: 8, padding: "0.625rem 1rem", marginBottom: "1rem", fontSize: "0.78rem", color: "#1D4ED8", fontWeight: 600, display: "flex", alignItems: "center", gap: "0.5rem" }}>
-        ℹ️ Data yang disimpan akan <strong>otomatis tersinkron</strong> ke tampilan SIPENDUK User secara real-time
-      </div>
-      <div style={{ background: W, border: `1.5px solid ${BDR}`, borderRadius: 12, padding: "2rem", boxShadow: "0 2px 10px rgba(0,0,0,0.05)" }}>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1.25rem" }}>
-          <div>
-            {inp("id_priode", "ID Periode", "select", { options: periodeData.map(p => ({ val: p.id_priode, label: p.nama_priode }) ) })}
-            {inp("tahun", "Tahun", "number", { min: 1996 })}
-          </div>
-          <div>
-            {inp("jumlah_pindah", "Jumlah Pindah")}
-            {inp("jumlah_datang", "Jumlah Datang")}
-            {inp("jumlah_kelahiran", "Jumlah Kelahiran")}
-            {inp("jumlah_kematian", "Jumlah Kematian")}
-          </div>
-        </div>
-        <hr style={{ border: "none", borderTop: `1px solid ${BDR}`, margin: "1.25rem 0" }} />
-        <div style={{ display: "flex", gap: "0.875rem" }}>
-          <button onClick={handleSubmit} style={{ background: `linear-gradient(135deg, ${P}, ${PL})`, border: "none", borderRadius: 8, color: W, fontWeight: 700, fontSize: "0.88rem", padding: "0.75rem 2rem", cursor: "pointer", boxShadow: `0 3px 12px ${P}44` }}>💾 Simpan & Sinkron</button>
-          <button onClick={() => onNav("daftar-penduduk")} style={{ background: W, border: `1.5px solid ${BDR}`, borderRadius: 8, color: M, fontWeight: 600, fontSize: "0.88rem", padding: "0.75rem 1.5rem", cursor: "pointer" }}>↩ Batal</button>
-        </div>
-      </div>
-
-      {/* Import Modal juga tampil di form view */}
-      {showImport && (
-        <ImportModalUI
-          showImport={showImport}
-          setShowImport={setShowImport}
-          importRaw={importRaw}
-          setImportRaw={setImportRaw}
-          importPreview={importPreview}
-          setImportPreview={setImportPreview}
-          addToast={addToast}
-          importPenduduk={importPenduduk}
-          BDR={BDR} W={W} BG={BG} DNG={DNG} SUC={SUC} WRN={WRN} M={M} T={T} P={P}
-        />
-      )}
-    </div>
-  );
-
-  // DETAIL VIEW
+  // DETAIL VIEW (accessible from both views)
   if (detailId !== null) {
     const d = pendudukData.find(x => x.id_penduduk === detailId);
     if (!d) return null;
@@ -757,14 +706,41 @@ function DataPendudukPage({ showForm, addToast, onNav }) {
     );
   }
 
-  // TABLE VIEW
+  // LANDING VIEW (daftar-penduduk)
+  if (!showForm) {
+    return (
+      <div>
+        <h1 style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: "1.4rem", fontWeight: 800, color: T, marginBottom: "1.25rem" }}>👥 Data Penduduk</h1>
+        <p style={{ fontSize: "0.88rem", color: M, marginBottom: "1.5rem" }}>Kelola data kependudukan Kota Tegal — pilih menu di bawah:</p>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "1.25rem" }}>
+          {[
+            { icon: "📋", title: "Data Primer", desc: "Kelola data migrasi (pindah, datang, lahir, mati)", btn: "Buka Data Primer", nav: "tambah-penduduk" },
+            { icon: "📦", title: "Data Sekunder", desc: "Kelola data detail (gender, usia, kecamatan, sosial, TK, pendidikan)", btn: "Buka Data Sekunder", nav: "data-migrasi" },
+            { icon: "🔮", title: "Prediksi KNN", desc: "Proyeksi penduduk dengan algoritma KNN", btn: "Lihat Prediksi", nav: "prediksi-knn" },
+          ].map(card => (
+            <div key={card.nav} style={{ background: W, border: `1.5px solid ${BDR}`, borderRadius: 12, padding: "1.5rem", boxShadow: "0 2px 10px rgba(0,0,0,0.05)", display: "flex", flexDirection: "column" }}>
+              <div style={{ fontSize: "2rem", marginBottom: "0.75rem" }}>{card.icon}</div>
+              <div style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontWeight: 700, color: T, fontSize: "0.95rem", marginBottom: "0.375rem" }}>{card.title}</div>
+              <div style={{ fontSize: "0.8rem", color: M, marginBottom: "1rem", lineHeight: 1.5, flex: 1 }}>{card.desc}</div>
+              <button onClick={() => onNav(card.nav)} style={{ background: `linear-gradient(135deg, ${P}, ${PL})`, border: "none", borderRadius: 8, color: W, fontWeight: 700, fontSize: "0.82rem", padding: "0.65rem", cursor: "pointer" }}>{card.btn}</button>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // FORM + TABLE (combined view — Data Primer)
   return (
     <div>
       <ConfirmModal show={deleteId !== null} onConfirm={doDelete} onCancel={() => setDeleteId(null)} />
+      <ClearConfirmModal show={clearConfirm} onConfirm={() => { clearAllPenduduk(); setClearConfirm(false); addToast("Semua data primer dihapus!", "success"); }} onCancel={() => setClearConfirm(false)} />
       <div style={{ marginBottom: "1.5rem", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "0.75rem" }}>
-        <h1 style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: "1.4rem", fontWeight: 800, color: T }}>👥 Data Primer Penduduk</h1>
+        <h1 style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: "1.4rem", fontWeight: 800, color: T }}>
+          {editId ? "✏️ Edit Data Primer" : "👥 Data Primer"}
+        </h1>
         <div style={{ display: "flex", gap: "0.625rem" }}>
-          <button onClick={openAdd} style={{ background: `linear-gradient(135deg, ${P}, ${PL})`, border: "none", borderRadius: 8, color: W, fontWeight: 700, fontSize: "0.82rem", padding: "0.6rem 1.25rem", cursor: "pointer" }}>➕ Tambah Data</button>
+          <button onClick={() => { setEditId(null); setForm(emptyForm); setFormErrors({}); }} style={{ background: editId ? `${WRN}15` : `linear-gradient(135deg, ${P}, ${PL})`, border: editId ? `1px solid ${WRN}` : "none", borderRadius: 8, color: editId ? WRN : W, fontWeight: 700, fontSize: "0.82rem", padding: "0.6rem 1.25rem", cursor: "pointer" }}>{editId ? "↩ Batal Edit" : "➕ Tambah Data"}</button>
           <button onClick={() => {
             const rows = pendudukData.map(d => ({ ID: d.id_penduduk, Periode: d.id_priode, Tahun: d.tahun, Pindah: d.jumlah_pindah, Datang: d.jumlah_datang, Kelahiran: d.jumlah_kelahiran, Kematian: d.jumlah_kematian }));
             const header = Object.keys(rows[0] || {});
@@ -775,6 +751,31 @@ function DataPendudukPage({ showForm, addToast, onNav }) {
           }} style={{ background: W, border: `1px solid ${BDR}`, borderRadius: 8, color: M, fontWeight: 600, fontSize: "0.82rem", padding: "0.6rem 1rem", cursor: "pointer" }}>📥 Export</button>
           <button onClick={() => { setShowImport(true); setImportRaw(""); setImportPreview([]); }} style={{ background: `linear-gradient(135deg, #7C3AED, #A855F7)`, border: "none", borderRadius: 8, color: W, fontWeight: 700, fontSize: "0.82rem", padding: "0.6rem 1rem", cursor: "pointer" }}>📤 Import Data</button>
           {pendudukData.length > 0 && <button onClick={() => setClearConfirm(true)} style={{ background: `${DNG}15`, border: `1px solid ${DNG}`, borderRadius: 8, color: DNG, fontWeight: 700, fontSize: "0.82rem", padding: "0.6rem 1rem", cursor: "pointer" }}>🗑️ Hapus Semua</button>}
+        </div>
+      </div>
+      {/* Sync notice */}
+      <div style={{ background: "#DBEAFE", border: "1.5px solid #2563EB", borderRadius: 8, padding: "0.625rem 1rem", marginBottom: "1rem", fontSize: "0.78rem", color: "#1D4ED8", fontWeight: 600, display: "flex", alignItems: "center", gap: "0.5rem" }}>
+        ℹ️ Data yang disimpan akan <strong>otomatis tersinkron</strong> ke tampilan SIPENDUK User secara real-time
+      </div>
+      {/* Form */}
+      <div style={{ background: W, border: `1.5px solid ${BDR}`, borderRadius: 12, padding: "2rem", boxShadow: "0 2px 10px rgba(0,0,0,0.05)", marginBottom: "1.5rem" }}>
+        <div style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: "0.95rem", fontWeight: 700, color: T, marginBottom: "1rem" }}>{editId ? "✏️ Edit" : "➕ Tambah"} Data Primer</div>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1.25rem" }}>
+          <div>
+            {inp("id_priode", "ID Periode", "select", { options: periodeData.map(p => ({ val: p.id_priode, label: p.nama_priode }) ) })}
+            {inp("tahun", "Tahun", "number", { min: 1996 })}
+          </div>
+          <div>
+            {inp("jumlah_pindah", "Jumlah Pindah")}
+            {inp("jumlah_datang", "Jumlah Datang")}
+            {inp("jumlah_kelahiran", "Jumlah Kelahiran")}
+            {inp("jumlah_kematian", "Jumlah Kematian")}
+          </div>
+        </div>
+        <hr style={{ border: "none", borderTop: `1px solid ${BDR}`, margin: "1.25rem 0" }} />
+        <div style={{ display: "flex", gap: "0.875rem" }}>
+          <button onClick={handleSubmit} style={{ background: `linear-gradient(135deg, ${P}, ${PL})`, border: "none", borderRadius: 8, color: W, fontWeight: 700, fontSize: "0.88rem", padding: "0.75rem 2rem", cursor: "pointer", boxShadow: `0 3px 12px ${P}44` }}>💾 Simpan</button>
+          {editId && <button onClick={() => { setEditId(null); setForm(emptyForm); setFormErrors({}); }} style={{ background: W, border: `1.5px solid ${BDR}`, borderRadius: 8, color: M, fontWeight: 600, fontSize: "0.88rem", padding: "0.75rem 1.5rem", cursor: "pointer" }}>↩ Batal</button>}
         </div>
       </div>
 
