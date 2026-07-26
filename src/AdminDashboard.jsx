@@ -13,7 +13,7 @@ import {
   ResponsiveContainer, AreaChart, Area,
 } from "recharts";
 import { useAppContext } from "./AppContext.jsx";
-import { indikatorData } from "./data.js";
+
 import { ADMIN as A } from "./theme.js";
 
 const ZEN_BASE = import.meta.env.DEV ? "/zen" : "https://opencode.ai/zen/v1";
@@ -948,7 +948,7 @@ function PrediksiPage() {
         return { tahun: s.tahun, nilai: produktif ? parseFloat((((s.umur_0_4 || 0) + (s.umur_65_plus || 0)) / produktif * 100).toFixed(2)) : 0 };
       });
       if (selInd === "pertumbuhan_penduduk") {
-        let hasil = [];
+        const hasil = [];
         if (sortedStats.length) {
           for (let i = 0; i < sortedStats.length; i++) {
             const s = sortedStats[i];
@@ -960,13 +960,6 @@ function PrediksiPage() {
             hasil.push({ tahun: s.tahun, nilai: parseFloat((((popCurr - popPrev) / popPrev) * 100).toFixed(2)) });
           }
         }
-        const fallback = indikatorData["Laju Pertumbuhan Penduduk"]?.data?.["Kota Tegal (Kota)"] || [];
-        if (!hasil.length) return fallback.map(d => ({ tahun: d.tahun, nilai: d.nilai }));
-        const tahunHist = new Set(hasil.map(d => d.tahun));
-        for (const d of fallback) {
-          if (!tahunHist.has(d.tahun)) hasil.push({ tahun: d.tahun, nilai: d.nilai });
-        }
-        hasil.sort((a, b) => a.tahun - b.tahun);
         return hasil;
       }
       return [];
