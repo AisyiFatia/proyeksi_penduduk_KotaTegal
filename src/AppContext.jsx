@@ -245,23 +245,16 @@ export function AppProvider({ children }) {
   const importPenduduk = useCallback((records) => {
     setPendudukData(prev => {
       const maxId = prev.length > 0 ? Math.max(...prev.map(d => d.id_penduduk)) : 0;
-      const entries = records.map((r, i) => ({
-        id_penduduk: maxId + i + 1,
-        id_priode: r.tahun - 1995,
-        tahun: r.tahun,
-        jumlah_pindah: r.jumlah_pindah || 0,
-        jumlah_datang: r.jumlah_datang || 0,
-        jumlah_kelahiran: r.jumlah_kelahiran || 0,
-        jumlah_kematian: r.jumlah_kematian || 0,
-        sd: r.sd || 0,
-        smp: r.smp || 0,
-        sma: r.sma || 0,
-        pt: r.pt || 0,
-        balita: r.balita || 0,
-        sekolah: r.sekolah || 0,
-        produktif: r.produktif || 0,
-        lansia: r.lansia || 0,
-      }));
+      const NEW_FIELDS = ["jml_pria","jml_perempuan","umur_0_4","umur_5_18","umur_15_64","umur_65_plus","penduduk_tegal_selatan","penduduk_tegal_timur","penduduk_tegal_barat","penduduk_margadana","jml_miskin","pendapatan_per_kapita","jml_sekolah","jml_faskes","jml_pekerja_formal","jml_pekerja_informal","jml_penganggur","jml_pendidikan_sd","jml_pendidikan_smp","jml_pendidikan_sma","jml_pendidikan_pt"];
+      const entries = records.map((r, i) => {
+        const entry = {
+          id_penduduk: maxId + i + 1,
+          id_priode: r.tahun - 1995,
+          tahun: r.tahun,
+        };
+        NEW_FIELDS.forEach(k => { entry[k] = r[k] || 0; });
+        return entry;
+      });
       api.bulkAddPenduduk(entries);
       return [...prev, ...entries];
     });

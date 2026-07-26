@@ -468,7 +468,32 @@ function DashboardPage({ onNav }) {
 // ══════════════════════════════════════════════════════════════
 //  DATA PENDUDUK — DAFTAR & FORM
 // ══════════════════════════════════════════════════════════════
-const emptyForm = { id_priode: 1, tahun: 2024, jumlah_pindah: "", jumlah_datang: "", jumlah_kelahiran: "", jumlah_kematian: "", sd: "", smp: "", sma: "", pt: "", balita: "", sekolah: "", produktif: "", lansia: "" };
+const NEW_FIELDS = [
+  { k: "jml_pria", l: "Jumlah Penduduk Pria", g: "gender" },
+  { k: "jml_perempuan", l: "Jumlah Penduduk Perempuan", g: "gender" },
+  { k: "umur_0_4", l: "Penduduk Umur 0-4", g: "usia" },
+  { k: "umur_5_18", l: "Penduduk Umur 5-18", g: "usia" },
+  { k: "umur_15_64", l: "Penduduk Umur 15-64", g: "usia" },
+  { k: "umur_65_plus", l: "Penduduk Umur 65+", g: "usia" },
+  { k: "penduduk_tegal_selatan", l: "Penduduk Tegal Selatan", g: "kecamatan" },
+  { k: "penduduk_tegal_timur", l: "Penduduk Tegal Timur", g: "kecamatan" },
+  { k: "penduduk_tegal_barat", l: "Penduduk Tegal Barat", g: "kecamatan" },
+  { k: "penduduk_margadana", l: "Penduduk Margadana", g: "kecamatan" },
+  { k: "jml_miskin", l: "Jumlah Penduduk Miskin", g: "sosial" },
+  { k: "pendapatan_per_kapita", l: "Pendapatan Per Kapita (ribu Rp)", g: "sosial" },
+  { k: "jml_sekolah", l: "Jumlah Sekolah", g: "sosial" },
+  { k: "jml_faskes", l: "Jumlah Faskes", g: "sosial" },
+  { k: "jml_pekerja_formal", l: "Jumlah Pekerja Formal", g: "tenaga_kerja" },
+  { k: "jml_pekerja_informal", l: "Jumlah Pekerja Informal", g: "tenaga_kerja" },
+  { k: "jml_penganggur", l: "Jumlah Penganggur", g: "tenaga_kerja" },
+  { k: "jml_pendidikan_sd", l: "Jumlah Pendidikan SD", g: "pendidikan" },
+  { k: "jml_pendidikan_smp", l: "Jumlah Pendidikan SMP", g: "pendidikan" },
+  { k: "jml_pendidikan_sma", l: "Jumlah Pendidikan SMA", g: "pendidikan" },
+  { k: "jml_pendidikan_pt", l: "Jumlah Pendidikan PT", g: "pendidikan" },
+];
+const INIT_FORM = { id_priode: 1, tahun: 2024 };
+NEW_FIELDS.forEach(f => { INIT_FORM[f.k] = ""; });
+const emptyForm = INIT_FORM;
 
 
 
@@ -481,7 +506,7 @@ function ImportModalUI({ showImport, setShowImport, importRaw, setImportRaw, imp
           <span style={{ fontSize: "1.3rem" }}>📤</span>
           <div style={{ flex: 1 }}>
             <div style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontWeight: 700, color: W, fontSize: "1rem" }}>Import Data Penduduk</div>
-            <div style={{ fontSize: "0.75rem", color: "rgba(255,255,255,0.8)", marginTop: "0.15rem" }}>CSV / tab-separated — kolom: tahun, jumlah_pindah, jumlah_datang, jumlah_kelahiran, jumlah_kematian</div>
+            <div style={{ fontSize: "0.75rem", color: "rgba(255,255,255,0.8)", marginTop: "0.15rem" }}>CSV / tab-separated — kolom: tahun, jml_pria, jml_perempuan, ... (21 field data)</div>
           </div>
           <button onClick={() => setShowImport(false)} style={{ background: "rgba(255,255,255,0.2)", border: "none", borderRadius: 6, color: W, fontSize: "1.1rem", width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>✕</button>
         </div>
@@ -499,11 +524,11 @@ function ImportModalUI({ showImport, setShowImport, importRaw, setImportRaw, imp
               reader.readAsText(file);
             }} style={{ fontSize: "0.82rem", color: T }} />
           </div>
-          <div style={{ marginBottom: "1rem" }}>
-            <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: P, textTransform: "uppercase", marginBottom: "0.375rem" }}>Atau Tempel Data</label>
-            <textarea value={importRaw} onChange={e => setImportRaw(e.target.value)} rows={6} placeholder={`tahun\tjumlah_pindah\tjumlah_datang\tjumlah_kelahiran\tjumlah_kematian\n2020\t215\t195\t412\t182\n2021\t210\t190\t408\t180`}
-              style={{ width: "100%", padding: "0.65rem 0.875rem", border: `1.5px solid ${BDR}`, borderRadius: 8, fontSize: "0.8rem", fontFamily: "'JetBrains Mono',monospace", color: T, outline: "none", resize: "vertical", boxSizing: "border-box" }} />
-          </div>
+            <div style={{ marginBottom: "1rem" }}>
+              <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: P, textTransform: "uppercase", marginBottom: "0.375rem" }}>Atau Tempel Data</label>
+              <textarea value={importRaw} onChange={e => setImportRaw(e.target.value)} rows={6} placeholder={`tahun\tjml_pria\tjml_perempuan\tumur_0_4\t...\n2017\t141625\t140184\t21121\t...`}
+                style={{ width: "100%", padding: "0.65rem 0.875rem", border: `1.5px solid ${BDR}`, borderRadius: 8, fontSize: "0.8rem", fontFamily: "'JetBrains Mono',monospace", color: T, outline: "none", resize: "vertical", boxSizing: "border-box" }} />
+            </div>
           <button onClick={() => {
             if (!importRaw.trim()) { addToast("Masukkan data terlebih dahulu!", "error"); return; }
             let lines = importRaw.trim().split("\n").filter(l => l.trim());
@@ -516,10 +541,12 @@ function ImportModalUI({ showImport, setShowImport, importRaw, setImportRaw, imp
               parts = parts.map(p => p.replace(/["\r]/g, "").trim());
               const nums = parts.filter(p => p !== "").slice(-5).map(p => parseInt(p));
               if (nums.length < 4 || nums.some(n => isNaN(n))) { errors.push(`Baris ${i + 1}: data tidak valid`); return; }
-              let [tahun, pindah, datang, lahir, mati, sd, smp, sma, pt, balita, sekolah, produktif, lansia] = nums.length >= 5 ? nums : [nums[0], nums[1], nums[2], nums[3], 0, ...nums.slice(5)];
+              if (nums.length < 2) { errors.push(`Baris ${i + 1}: minimal tahun + 1 data`); return; }
+              const tahun = nums[0];
               if (isNaN(tahun) || tahun < 1996) { errors.push(`Baris ${i + 1}: tahun tidak valid`); return; }
-              if (isNaN(pindah) || isNaN(datang) || isNaN(lahir) || isNaN(mati)) { errors.push(`Baris ${i + 1}: nilai numerik tidak valid`); return; }
-              parsed.push({ tahun, jumlah_pindah: pindah, jumlah_datang: datang, jumlah_kelahiran: lahir, jumlah_kematian: mati, sd: sd ?? 0, smp: smp ?? 0, sma: sma ?? 0, pt: pt ?? 0, balita: balita ?? 0, sekolah: sekolah ?? 0, produktif: produktif ?? 0, lansia: lansia ?? 0 });
+              const entry = { tahun };
+              NEW_FIELDS.forEach((f, idx) => { entry[f.k] = nums[idx + 1] ?? 0; });
+              parsed.push(entry);
             });
             if (errors.length) {
               addToast(`⚠️ ${errors.length} error:\n${errors.slice(0, 5).join("\n")}`, "error");
@@ -604,7 +631,7 @@ function DataPendudukPage({ showForm, addToast, onNav }) {
     const e = {};
     if (!form.id_priode) e.id_priode = "Pilih periode";
     if (!form.tahun || form.tahun < 1996) e.tahun = "Tahun tidak valid";
-    ["jumlah_pindah", "jumlah_datang", "jumlah_kelahiran", "jumlah_kematian"].forEach(f => {
+    ["jml_pria", "jml_perempuan"].forEach(f => {
       if (form[f] === "" || +form[f] < 0) e[f] = "Wajib diisi (≥ 0)";
     });
     return e;
@@ -614,7 +641,8 @@ function DataPendudukPage({ showForm, addToast, onNav }) {
     const e = validate();
     if (Object.keys(e).length) { setFormErrors(e); return; }
     const toNum = (v) => v === "" ? 0 : +v;
-    const row = { ...form, jumlah_pindah: +form.jumlah_pindah, jumlah_datang: +form.jumlah_datang, jumlah_kelahiran: +form.jumlah_kelahiran, jumlah_kematian: +form.jumlah_kematian, sd: toNum(form.sd), smp: toNum(form.smp), sma: toNum(form.sma), pt: toNum(form.pt), balita: toNum(form.balita), sekolah: toNum(form.sekolah), produktif: toNum(form.produktif), lansia: toNum(form.lansia) };
+    const row = { id_priode: form.id_priode, tahun: form.tahun };
+    NEW_FIELDS.forEach(f => { row[f.k] = toNum(form[f.k]); });
     if (editId) {
       updatePenduduk(editId, row);
       addToast("✅ Data diperbarui & tersinkron ke SIPENDUK User!", "success");
@@ -667,41 +695,41 @@ function DataPendudukPage({ showForm, addToast, onNav }) {
         ℹ️ Data yang disimpan akan <strong>otomatis tersinkron</strong> ke tampilan SIPENDUK User secara real-time
       </div>
       <div style={{ background: W, border: `1.5px solid ${BDR}`, borderRadius: 12, padding: "2rem", boxShadow: "0 2px 10px rgba(0,0,0,0.05)" }}>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1.25rem" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1.25rem", marginBottom: "0.5rem" }}>
           <div>
-            {inp("id_priode", "ID Periode", "select", { options: periodeData.map(p => ({ val: p.id_priode, label: p.nama_priode })) })}
+            {inp("id_priode", "ID Periode", "select", { options: periodeData.map(p => ({ val: p.id_priode, label: p.nama_priode }) ) })}
+          </div>
+          <div>
             {inp("tahun", "Tahun", "number", { min: 1996 })}
           </div>
-          <div>
-            {inp("jumlah_pindah", "Jumlah Pindah")}
-            {inp("jumlah_datang", "Jumlah Datang")}
-            {inp("jumlah_kelahiran", "Jumlah Kelahiran")}
-            {inp("jumlah_kematian", "Jumlah Kematian")}
+        </div>
+
+        {[{ title: "👫 Jenis Kelamin", g: "gender" },
+          { title: "👶 Kelompok Usia", g: "usia" },
+          { title: "📍 Per Kecamatan", g: "kecamatan" },
+          { title: "📊 Sosial Ekonomi", g: "sosial" },
+          { title: "💼 Tenaga Kerja", g: "tenaga_kerja" },
+          { title: "📚 Pendidikan", g: "pendidikan" },
+        ].map(group => (
+          <div key={group.g}>
+            <hr style={{ border: "none", borderTop: `1px solid ${BDR}`, margin: "0.75rem 0" }} />
+            <div style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: "0.8rem", fontWeight: 700, color: P, marginBottom: "0.75rem" }}>{group.title}</div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: "0.75rem" }}>
+              {NEW_FIELDS.filter(f => f.g === group.g).map(f => {
+                const err = formErrors[f.k];
+                return (
+                  <div key={f.k}>
+                    <label style={{ display: "block", fontSize: "0.68rem", fontWeight: 700, color: M, textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: "0.3rem" }}>{f.l}</label>
+                    <input type="number" value={form[f.k]} onChange={e => setForm(p => ({ ...p, [f.k]: e.target.value }))} min={0} placeholder="0"
+                      style={{ width: "100%", padding: "0.55rem 0.75rem", border: `1.5px solid ${err ? DNG : BDR}`, borderRadius: 7, fontFamily: "'Inter',sans-serif", fontSize: "0.82rem", color: T, outline: "none", boxSizing: "border-box" }} />
+                    {err && <div style={{ fontSize: "0.65rem", color: DNG, marginTop: "0.2rem" }}>⚠ {err}</div>}
+                  </div>
+                );
+              })}
+            </div>
           </div>
-        </div>
-        <hr style={{ border: "none", borderTop: `1px solid ${BDR}`, margin: "1.25rem 0" }} />
-        <div style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: "0.85rem", fontWeight: 700, color: P, marginBottom: "1rem" }}>📚 Proyeksi Pendidikan (opsional)</div>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: "1rem" }}>
-          {[{ k: "sd", l: "SD" }, { k: "smp", l: "SMP" }, { k: "sma", l: "SMA" }, { k: "pt", l: "PT" }].map(f => (
-            <div key={f.k}>
-              <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: M, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "0.375rem" }}>{f.l}</label>
-              <input type="number" value={form[f.k]} onChange={e => setForm(p => ({ ...p, [f.k]: e.target.value }))} min={0} placeholder="0"
-                style={{ width: "100%", padding: "0.65rem 0.875rem", border: `1.5px solid ${BDR}`, borderRadius: 8, fontFamily: "'Inter',sans-serif", fontSize: "0.85rem", color: T, outline: "none", boxSizing: "border-box" }} />
-            </div>
-          ))}
-        </div>
-        <hr style={{ border: "none", borderTop: `1px solid ${BDR}`, margin: "1.25rem 0" }} />
-        <div style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: "0.85rem", fontWeight: 700, color: P, marginBottom: "1rem" }}>👶 Proyeksi Usia (opsional)</div>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: "1rem" }}>
-          {[{ k: "balita", l: "Balita (0-4)" }, { k: "sekolah", l: "Sekolah (5-18)" }, { k: "produktif", l: "Produktif (15-64)" }, { k: "lansia", l: "Lansia (≥65)" }].map(f => (
-            <div key={f.k}>
-              <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: M, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "0.375rem" }}>{f.l}</label>
-              <input type="number" value={form[f.k]} onChange={e => setForm(p => ({ ...p, [f.k]: e.target.value }))} min={0} placeholder="0"
-                style={{ width: "100%", padding: "0.65rem 0.875rem", border: `1.5px solid ${BDR}`, borderRadius: 8, fontFamily: "'Inter',sans-serif", fontSize: "0.85rem", color: T, outline: "none", boxSizing: "border-box" }} />
-            </div>
-          ))}
-        </div>
-        <hr style={{ border: "none", borderTop: `1px solid ${BDR}`, margin: "1.25rem 0" }} />
+        ))}
+        <hr style={{ border: "none", borderTop: `1px solid ${BDR}`, margin: "0.75rem 0" }} />
         <div style={{ display: "flex", gap: "0.875rem" }}>
           <button onClick={handleSubmit} style={{ background: `linear-gradient(135deg, ${P}, ${PL})`, border: "none", borderRadius: 8, color: W, fontWeight: 700, fontSize: "0.88rem", padding: "0.75rem 2rem", cursor: "pointer", boxShadow: `0 3px 12px ${P}44` }}>💾 Simpan & Sinkron</button>
           <button onClick={() => onNav("daftar-penduduk")} style={{ background: W, border: `1.5px solid ${BDR}`, borderRadius: 8, color: M, fontWeight: 600, fontSize: "0.88rem", padding: "0.75rem 1.5rem", cursor: "pointer" }}>↩ Batal</button>
@@ -728,7 +756,6 @@ function DataPendudukPage({ showForm, addToast, onNav }) {
   // DETAIL VIEW
   if (detailId !== null) {
     const d = pendudukData.find(x => x.id_penduduk === detailId);
-    const avg = field => Math.round(pendudukData.reduce((s, r) => s + r[field], 0) / pendudukData.length);
     if (!d) return null;
     return (
       <div>
@@ -740,27 +767,16 @@ function DataPendudukPage({ showForm, addToast, onNav }) {
           {[
             { label: "Tahun", val: d.tahun },
             { label: "Periode", val: periodeData.find(p => p.id_priode === d.id_priode)?.nama_priode || "-" },
-            { label: "Jumlah Pindah", val: d.jumlah_pindah.toLocaleString(), f: "jumlah_pindah", c: DNG },
-            { label: "Jumlah Datang", val: d.jumlah_datang.toLocaleString(), f: "jumlah_datang", c: SUC },
-            { label: "Jumlah Kelahiran", val: d.jumlah_kelahiran.toLocaleString(), f: "jumlah_kelahiran", c: "#2563EB" },
-            { label: "Jumlah Kematian", val: d.jumlah_kematian.toLocaleString(), f: "jumlah_kematian", c: WRN },
-          ].map(item => (
+            { label: "Penduduk Pria", val: (d.jml_pria || 0).toLocaleString(), c: "#2563EB" },
+            { label: "Penduduk Perempuan", val: (d.jml_perempuan || 0).toLocaleString(), c: "#D97706" },
+            { label: "Total Penduduk", val: ((d.jml_pria || 0) + (d.jml_perempuan || 0)).toLocaleString(), c: P },
+          ].concat(NEW_FIELDS.filter(f => f.k !== "jml_pria" && f.k !== "jml_perempuan").map(f => ({
+            label: f.l,
+            val: (d[f.k] || 0).toLocaleString(),
+          }))).map(item => (
             <div key={item.label} style={{ background: W, border: `1.5px solid ${BDR}`, borderRadius: 10, padding: "1rem 1.25rem", boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}>
               <div style={{ fontSize: "0.68rem", color: M, textTransform: "uppercase", fontWeight: 600, marginBottom: "0.375rem" }}>{item.label}</div>
               <div style={{ fontSize: "1.25rem", fontWeight: 700, color: item.c || T, fontFamily: "'JetBrains Mono',monospace" }}>{item.val}</div>
-              {item.f && (
-                <div style={{ marginTop: "0.5rem" }}>
-                  <div style={{ height: 6, background: BG, borderRadius: 3, overflow: "hidden" }}>
-                    <div style={{ height: "100%", background: item.c, borderRadius: 3, width: `${Math.min(100, (d[item.f] / Math.max(600, avg(item.f) * 1.5)) * 100)}%`, transition: "width 0.5s" }} />
-                  </div>
-                  <div style={{ fontSize: "0.65rem", color: M, marginTop: "0.25rem" }}>
-                    Rata-rata: {avg(item.f).toLocaleString()} &nbsp;
-                    <span style={{ color: d[item.f] > avg(item.f) ? SUC : DNG, fontWeight: 700 }}>
-                      {d[item.f] > avg(item.f) ? "▲ Di Atas" : "▼ Di Bawah"} Rata-rata
-                    </span>
-                  </div>
-                </div>
-              )}
             </div>
           ))}
         </div>
@@ -781,7 +797,11 @@ function DataPendudukPage({ showForm, addToast, onNav }) {
         <div style={{ display: "flex", gap: "0.625rem" }}>
           <button onClick={openAdd} style={{ background: `linear-gradient(135deg, ${P}, ${PL})`, border: "none", borderRadius: 8, color: W, fontWeight: 700, fontSize: "0.82rem", padding: "0.6rem 1.25rem", cursor: "pointer" }}>➕ Tambah Data</button>
           <button onClick={() => {
-            const rows = pendudukData.map(d => ({ ID: d.id_penduduk, Periode: d.id_priode, Tahun: d.tahun, Pindah: d.jumlah_pindah, Datang: d.jumlah_datang, Kelahiran: d.jumlah_kelahiran, Kematian: d.jumlah_kematian, SD: d.sd ?? 0, SMP: d.smp ?? 0, SMA: d.sma ?? 0, PT: d.pt ?? 0, Balita: d.balita ?? 0, Sekolah: d.sekolah ?? 0, Produktif: d.produktif ?? 0, Lansia: d.lansia ?? 0 }));
+            const rows = pendudukData.map(d => {
+              const r = { ID: d.id_penduduk, Periode: d.id_priode, Tahun: d.tahun };
+              NEW_FIELDS.forEach(f => { r[f.l] = d[f.k] ?? 0; });
+              return r;
+            });
             const header = Object.keys(rows[0] || {});
             const csv = [header.join(","), ...rows.map(r => header.map(h => r[h]).join(","))].join("\n");
             const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
@@ -806,7 +826,7 @@ function DataPendudukPage({ showForm, addToast, onNav }) {
         <div style={{ overflowX: "auto" }}>
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.8rem" }}>
             <thead><tr style={{ background: `linear-gradient(135deg, ${P}, ${PL})` }}>
-              {["Aksi", "No", "ID", "Tahun", "Pindah", "Datang", "Kelahiran", "Kematian", "SD", "SMP", "SMA", "PT", "Balita", "Sekolah", "Produktif", "Lansia"].map(h => (
+              {["Aksi", "No", "ID", "Tahun", "Pria", "Perempuan", "0-4", "5-18", "15-64", "65+", "T.Selatan", "T.Timur", "T.Barat", "Margadana", "Miskin", "P.Kapita", "Sekolah", "Faskes", "P.Formal", "P.Informal", "Penganggur", "SD", "SMP", "SMA", "PT"].map(h => (
                 <th key={h} style={{ padding: "0.75rem 0.875rem", textAlign: "left", color: W, fontWeight: 700, fontSize: "0.67rem", textTransform: "uppercase", letterSpacing: "0.05em", whiteSpace: "nowrap" }}>{h}</th>
               ))}
             </tr></thead>
@@ -828,18 +848,9 @@ function DataPendudukPage({ showForm, addToast, onNav }) {
                   <td style={{ padding: "0.55rem 0.875rem", color: M }}>{(page - 1) * PER_PAGE + i + 1}</td>
                   <td style={{ padding: "0.55rem 0.875rem", fontFamily: "monospace", color: P, fontWeight: 700 }}>#{d.id_penduduk}</td>
                   <td style={{ padding: "0.55rem 0.875rem", fontWeight: 700, color: T }}>{d.tahun}</td>
-                  <td style={{ padding: "0.55rem 0.875rem", fontFamily: "monospace", fontWeight: 600, color: DNG }}>{d.jumlah_pindah.toLocaleString()}</td>
-                  <td style={{ padding: "0.55rem 0.875rem", fontFamily: "monospace", fontWeight: 600, color: SUC }}>{d.jumlah_datang.toLocaleString()}</td>
-                  <td style={{ padding: "0.55rem 0.875rem", fontFamily: "monospace", fontWeight: 600, color: "#2563EB" }}>{d.jumlah_kelahiran.toLocaleString()}</td>
-                  <td style={{ padding: "0.55rem 0.875rem", fontFamily: "monospace", fontWeight: 600, color: WRN }}>{d.jumlah_kematian.toLocaleString()}</td>
-                  <td style={{ padding: "0.55rem 0.875rem", fontFamily: "monospace", color: M }}>{(d.sd ?? 0).toLocaleString()}</td>
-                  <td style={{ padding: "0.55rem 0.875rem", fontFamily: "monospace", color: M }}>{(d.smp ?? 0).toLocaleString()}</td>
-                  <td style={{ padding: "0.55rem 0.875rem", fontFamily: "monospace", color: M }}>{(d.sma ?? 0).toLocaleString()}</td>
-                  <td style={{ padding: "0.55rem 0.875rem", fontFamily: "monospace", color: M }}>{(d.pt ?? 0).toLocaleString()}</td>
-                  <td style={{ padding: "0.55rem 0.875rem", fontFamily: "monospace", color: M }}>{(d.balita ?? 0).toLocaleString()}</td>
-                  <td style={{ padding: "0.55rem 0.875rem", fontFamily: "monospace", color: M }}>{(d.sekolah ?? 0).toLocaleString()}</td>
-                  <td style={{ padding: "0.55rem 0.875rem", fontFamily: "monospace", color: M }}>{(d.produktif ?? 0).toLocaleString()}</td>
-                  <td style={{ padding: "0.55rem 0.875rem", fontFamily: "monospace", color: M }}>{(d.lansia ?? 0).toLocaleString()}</td>
+                  {NEW_FIELDS.map(f => (
+                    <td key={f.k} style={{ padding: "0.55rem 0.875rem", fontFamily: "monospace", fontWeight: f.k === "jml_pria" || f.k === "jml_perempuan" ? 700 : 400, color: f.k === "jml_pria" ? "#2563EB" : f.k === "jml_perempuan" ? "#D97706" : M }}>{(d[f.k] ?? 0).toLocaleString()}</td>
+                  ))}
                 </tr>
               ))}
             </tbody>
@@ -904,71 +915,32 @@ function DataPendudukPage({ showForm, addToast, onNav }) {
 function PrediksiPage() {
   const { pendudukData, getYearlyStats } = useAppContext();
 
-  const DUMMY_DATA = {
-    proyeksi_pendidikan_sd: { d: "Proyeksi Pendidikan - SD", s: "jiwa", data: [{ t: 2020, v: 76683 }, { t: 2021, v: 76200 }, { t: 2022, v: 75716 }, { t: 2023, v: 75233 }, { t: 2024, v: 74750 }, { t: 2025, v: 74266 }, { t: 2026, v: 73783 }, { t: 2027, v: 73300 }, { t: 2028, v: 72816 }, { t: 2029, v: 72333 }, { t: 2030, v: 71850 }, { t: 2031, v: 71580 }, { t: 2032, v: 71310 }, { t: 2033, v: 71040 }, { t: 2034, v: 70770 }, { t: 2035, v: 70500 }] },
-    proyeksi_pendidikan_smp: { d: "Proyeksi Pendidikan - SMP", s: "jiwa", data: [{ t: 2020, v: 53982 }, { t: 2021, v: 54200 }, { t: 2022, v: 54418 }, { t: 2023, v: 54636 }, { t: 2024, v: 54854 }, { t: 2025, v: 55072 }, { t: 2026, v: 55290 }, { t: 2027, v: 55508 }, { t: 2028, v: 55726 }, { t: 2029, v: 55944 }, { t: 2030, v: 56162 }, { t: 2031, v: 56328 }, { t: 2032, v: 56494 }, { t: 2033, v: 56660 }, { t: 2034, v: 56826 }, { t: 2035, v: 56992 }] },
-    proyeksi_pendidikan_sma: { d: "Proyeksi Pendidikan - SMA", s: "jiwa", data: [{ t: 2020, v: 62466 }, { t: 2021, v: 63300 }, { t: 2022, v: 64134 }, { t: 2023, v: 64968 }, { t: 2024, v: 65802 }, { t: 2025, v: 66636 }, { t: 2026, v: 67470 }, { t: 2027, v: 68304 }, { t: 2028, v: 69138 }, { t: 2029, v: 69972 }, { t: 2030, v: 70806 }, { t: 2031, v: 71424 }, { t: 2032, v: 72042 }, { t: 2033, v: 72660 }, { t: 2034, v: 73278 }, { t: 2035, v: 73896 }] },
-    proyeksi_pendidikan_pt: { d: "Proyeksi Pendidikan - PT", s: "jiwa", data: [{ t: 2020, v: 39776 }, { t: 2021, v: 40700 }, { t: 2022, v: 41624 }, { t: 2023, v: 42548 }, { t: 2024, v: 43472 }, { t: 2025, v: 44396 }, { t: 2026, v: 45320 }, { t: 2027, v: 46244 }, { t: 2028, v: 47168 }, { t: 2029, v: 48092 }, { t: 2030, v: 49016 }, { t: 2031, v: 49696 }, { t: 2032, v: 50376 }, { t: 2033, v: 51056 }, { t: 2034, v: 51736 }, { t: 2035, v: 52416 }] },
-    tingkat_pengangguran: { d: "Tingkat Pengangguran", s: "%", data: [{ t: 2020, v: 8.5 }, { t: 2021, v: 9.2 }, { t: 2022, v: 8.8 }, { t: 2023, v: 8.3 }, { t: 2024, v: 7.9 }, { t: 2025, v: 7.5 }, { t: 2026, v: 7.2 }, { t: 2027, v: 6.9 }, { t: 2028, v: 6.6 }, { t: 2029, v: 6.4 }, { t: 2030, v: 6.2 }, { t: 2031, v: 6.0 }, { t: 2032, v: 5.8 }, { t: 2033, v: 5.7 }, { t: 2034, v: 5.6 }, { t: 2035, v: 5.5 }] },
-    pendapatan_per_kapita: { d: "Pendapatan per Kapita", s: "ribu Rp", data: [{ t: 2020, v: 28950 }, { t: 2021, v: 29500 }, { t: 2022, v: 30120 }, { t: 2023, v: 30800 }, { t: 2024, v: 31500 }, { t: 2025, v: 32200 }, { t: 2026, v: 32900 }, { t: 2027, v: 33600 }, { t: 2028, v: 34300 }, { t: 2029, v: 35000 }, { t: 2030, v: 35700 }, { t: 2031, v: 36400 }, { t: 2032, v: 37100 }, { t: 2033, v: 37800 }, { t: 2034, v: 38500 }, { t: 2035, v: 39200 }] },
-    tingkat_kemiskinan: { d: "Tingkat Kemiskinan", s: "%", data: [{ t: 2020, v: 11.2 }, { t: 2021, v: 11.8 }, { t: 2022, v: 11.5 }, { t: 2023, v: 11.0 }, { t: 2024, v: 10.6 }, { t: 2025, v: 10.2 }, { t: 2026, v: 9.8 }, { t: 2027, v: 9.5 }, { t: 2028, v: 9.2 }, { t: 2029, v: 8.9 }, { t: 2030, v: 8.6 }, { t: 2031, v: 8.4 }, { t: 2032, v: 8.2 }, { t: 2033, v: 8.0 }, { t: 2034, v: 7.8 }, { t: 2035, v: 7.6 }] },
-    jumlah_sekolah: { d: "Jumlah Sekolah", s: "unit", data: [{ t: 2020, v: 185 }, { t: 2021, v: 187 }, { t: 2022, v: 190 }, { t: 2023, v: 192 }, { t: 2024, v: 195 }, { t: 2025, v: 197 }, { t: 2026, v: 199 }, { t: 2027, v: 201 }, { t: 2028, v: 203 }, { t: 2029, v: 205 }, { t: 2030, v: 207 }, { t: 2031, v: 208 }, { t: 2032, v: 209 }, { t: 2033, v: 210 }, { t: 2034, v: 211 }, { t: 2035, v: 212 }] },
-    jumlah_faskes: { d: "Jumlah Fasilitas Kesehatan", s: "unit", data: [{ t: 2020, v: 42 }, { t: 2021, v: 44 }, { t: 2022, v: 46 }, { t: 2023, v: 48 }, { t: 2024, v: 50 }, { t: 2025, v: 52 }, { t: 2026, v: 54 }, { t: 2027, v: 56 }, { t: 2028, v: 58 }, { t: 2029, v: 60 }, { t: 2030, v: 62 }, { t: 2031, v: 63 }, { t: 2032, v: 64 }, { t: 2033, v: 65 }, { t: 2034, v: 66 }, { t: 2035, v: 67 }] },
-
-    proyeksi_laki: { d: "Proyeksi Jumlah Penduduk Laki-laki", s: "jiwa", data: [{ t: 2020, v: 140637 }, { t: 2021, v: 141279 }, { t: 2022, v: 141922 }, { t: 2023, v: 142564 }, { t: 2024, v: 143207 }, { t: 2025, v: 143849 }, { t: 2026, v: 144491 }, { t: 2027, v: 145134 }, { t: 2028, v: 145776 }, { t: 2029, v: 146418 }, { t: 2030, v: 147061 }, { t: 2031, v: 147528 }, { t: 2032, v: 147995 }, { t: 2033, v: 148463 }, { t: 2034, v: 148930 }, { t: 2035, v: 149397 }] },
-    proyeksi_perempuan: { d: "Proyeksi Jumlah Penduduk Perempuan", s: "jiwa", data: [{ t: 2020, v: 143479 }, { t: 2021, v: 144121 }, { t: 2022, v: 144764 }, { t: 2023, v: 145406 }, { t: 2024, v: 146049 }, { t: 2025, v: 146691 }, { t: 2026, v: 147333 }, { t: 2027, v: 147976 }, { t: 2028, v: 148618 }, { t: 2029, v: 149260 }, { t: 2030, v: 149903 }, { t: 2031, v: 150307 }, { t: 2032, v: 150712 }, { t: 2033, v: 151116 }, { t: 2034, v: 151521 }, { t: 2035, v: 151925 }] },
-    proyeksi_balita: { d: "Proyeksi Penduduk Usia Balita (0-4)", s: "jiwa", data: [{ t: 2020, v: 21310 }, { t: 2021, v: 21100 }, { t: 2022, v: 20890 }, { t: 2023, v: 20680 }, { t: 2024, v: 20470 }, { t: 2025, v: 20260 }, { t: 2026, v: 20050 }, { t: 2027, v: 19840 }, { t: 2028, v: 19630 }, { t: 2029, v: 19420 }, { t: 2030, v: 19210 }, { t: 2031, v: 19040 }, { t: 2032, v: 18870 }, { t: 2033, v: 18700 }, { t: 2034, v: 18530 }, { t: 2035, v: 18360 }] },
-    proyeksi_usia_sekolah: { d: "Proyeksi Penduduk Usia Sekolah (5-18)", s: "jiwa", data: [{ t: 2020, v: 54100 }, { t: 2021, v: 53920 }, { t: 2022, v: 53740 }, { t: 2023, v: 53560 }, { t: 2024, v: 53380 }, { t: 2025, v: 53200 }, { t: 2026, v: 53020 }, { t: 2027, v: 52840 }, { t: 2028, v: 52660 }, { t: 2029, v: 52480 }, { t: 2030, v: 52300 }, { t: 2031, v: 52160 }, { t: 2032, v: 52020 }, { t: 2033, v: 51880 }, { t: 2034, v: 51740 }, { t: 2035, v: 51600 }] },
-    proyeksi_usia_produktif: { d: "Proyeksi Penduduk Usia Produktif (15-64)", s: "jiwa", data: [{ t: 2020, v: 193200 }, { t: 2021, v: 194000 }, { t: 2022, v: 194800 }, { t: 2023, v: 195600 }, { t: 2024, v: 196400 }, { t: 2025, v: 197200 }, { t: 2026, v: 198000 }, { t: 2027, v: 198800 }, { t: 2028, v: 199600 }, { t: 2029, v: 200400 }, { t: 2030, v: 201200 }, { t: 2031, v: 201800 }, { t: 2032, v: 202400 }, { t: 2033, v: 203000 }, { t: 2034, v: 203600 }, { t: 2035, v: 204200 }] },
-    proyeksi_lansia: { d: "Proyeksi Penduduk Lansia (>=65)", s: "jiwa", data: [{ t: 2020, v: 21300 }, { t: 2021, v: 22100 }, { t: 2022, v: 22900 }, { t: 2023, v: 23700 }, { t: 2024, v: 24500 }, { t: 2025, v: 25300 }, { t: 2026, v: 26100 }, { t: 2027, v: 26900 }, { t: 2028, v: 27700 }, { t: 2029, v: 28500 }, { t: 2030, v: 29300 }, { t: 2031, v: 30050 }, { t: 2032, v: 30800 }, { t: 2033, v: 31550 }, { t: 2034, v: 32300 }, { t: 2035, v: 33050 }] },
-
-    proyeksi_sex_ratio: { d: "Proyeksi Rasio Jenis Kelamin", s: "rasio", data: [{ t: 2020, v: 98.0 }, { t: 2021, v: 98.0 }, { t: 2022, v: 98.0 }, { t: 2023, v: 98.0 }, { t: 2024, v: 98.0 }, { t: 2025, v: 98.1 }, { t: 2026, v: 98.1 }, { t: 2027, v: 98.1 }, { t: 2028, v: 98.1 }, { t: 2029, v: 98.1 }, { t: 2030, v: 98.1 }, { t: 2031, v: 98.2 }, { t: 2032, v: 98.2 }, { t: 2033, v: 98.2 }, { t: 2034, v: 98.2 }, { t: 2035, v: 98.3 }] },
-    proyeksi_bonus_demografi: { d: "Proyeksi Bonus Demografi", s: "rasio", data: [{ t: 2020, v: 0.471 }, { t: 2021, v: 0.466 }, { t: 2022, v: 0.462 }, { t: 2023, v: 0.457 }, { t: 2024, v: 0.453 }, { t: 2025, v: 0.448 }, { t: 2026, v: 0.444 }, { t: 2027, v: 0.439 }, { t: 2028, v: 0.435 }, { t: 2029, v: 0.430 }, { t: 2030, v: 0.426 }, { t: 2031, v: 0.423 }, { t: 2032, v: 0.420 }, { t: 2033, v: 0.417 }, { t: 2034, v: 0.414 }, { t: 2035, v: 0.411 }] },
-
-    proyeksi_kecamatan: { d: "Proyeksi Penduduk per Kecamatan", s: "jiwa", data: [{ t: 2020, v: 71029 }, { t: 2021, v: 71350 }, { t: 2022, v: 71672 }, { t: 2023, v: 71993 }, { t: 2024, v: 72314 }, { t: 2025, v: 72635 }, { t: 2026, v: 72956 }, { t: 2027, v: 73278 }, { t: 2028, v: 73599 }, { t: 2029, v: 73920 }, { t: 2030, v: 74241 }, { t: 2031, v: 74459 }, { t: 2032, v: 74677 }, { t: 2033, v: 74895 }, { t: 2034, v: 75113 }, { t: 2035, v: 75331 }] },
-    proyeksi_kelurahan: { d: "Proyeksi Penduduk per Kelurahan", s: "jiwa", data: [{ t: 2020, v: 10523 }, { t: 2021, v: 10570 }, { t: 2022, v: 10618 }, { t: 2023, v: 10666 }, { t: 2024, v: 10713 }, { t: 2025, v: 10761 }, { t: 2026, v: 10808 }, { t: 2027, v: 10856 }, { t: 2028, v: 10904 }, { t: 2029, v: 10951 }, { t: 2030, v: 10999 }, { t: 2031, v: 11030 }, { t: 2032, v: 11062 }, { t: 2033, v: 11093 }, { t: 2034, v: 11125 }, { t: 2035, v: 11156 }] },
-
-
-    proyeksi_pekerjaan_formal: { d: "Proyeksi Pekerjaan - Formal", s: "jiwa", data: [{ t: 2020, v: 96500 }, { t: 2021, v: 95800 }, { t: 2022, v: 97000 }, { t: 2023, v: 98400 }, { t: 2024, v: 99600 }, { t: 2025, v: 101000 }, { t: 2026, v: 102200 }, { t: 2027, v: 103600 }, { t: 2028, v: 104800 }, { t: 2029, v: 106200 }, { t: 2030, v: 107400 }, { t: 2031, v: 108200 }, { t: 2032, v: 109000 }, { t: 2033, v: 109800 }, { t: 2034, v: 110600 }, { t: 2035, v: 111400 }] },
-    proyeksi_pekerjaan_informal: { d: "Proyeksi Pekerjaan - Informal", s: "jiwa", data: [{ t: 2020, v: 96700 }, { t: 2021, v: 98200 }, { t: 2022, v: 98000 }, { t: 2023, v: 97600 }, { t: 2024, v: 97400 }, { t: 2025, v: 97000 }, { t: 2026, v: 96800 }, { t: 2027, v: 96400 }, { t: 2028, v: 96200 }, { t: 2029, v: 95800 }, { t: 2030, v: 95600 }, { t: 2031, v: 95600 }, { t: 2032, v: 95600 }, { t: 2033, v: 95600 }, { t: 2034, v: 95600 }, { t: 2035, v: 95600 }] },
-
-    proyeksi_fasilitas_publik: { d: "Proyeksi Kebutuhan Fasilitas Pelayanan Publik", s: "unit", data: [{ t: 2020, v: 156 }, { t: 2021, v: 160 }, { t: 2022, v: 164 }, { t: 2023, v: 168 }, { t: 2024, v: 172 }, { t: 2025, v: 176 }, { t: 2026, v: 180 }, { t: 2027, v: 183 }, { t: 2028, v: 186 }, { t: 2029, v: 189 }, { t: 2030, v: 192 }, { t: 2031, v: 194 }, { t: 2032, v: 196 }, { t: 2033, v: 198 }, { t: 2034, v: 200 }, { t: 2035, v: 202 }] },
-  };
-
   const PENDUDUK_INDIKATOR = [
     { id: "jumlah_penduduk", label: "Proyeksi Jumlah Penduduk", satuan: "jiwa", src: "penduduk" },
-    { id: "jumlah_kelahiran", label: "Proyeksi Jumlah Kelahiran", satuan: "kelahiran", src: "penduduk" },
-    { id: "jumlah_kematian", label: "Proyeksi Jumlah Kematian", satuan: "kematian", src: "penduduk" },
-    { id: "jumlah_datang", label: "Proyeksi Penduduk Datang (Migrasi Masuk)", satuan: "datang", src: "penduduk" },
-    { id: "jumlah_pindah", label: "Proyeksi Penduduk Pindah (Migrasi Keluar)", satuan: "pindah", src: "penduduk" },
-    { id: "migrasi_netto", label: "Proyeksi Migrasi Netto", satuan: "jiwa", src: "penduduk" },
+    { id: "proyeksi_laki", label: "Proyeksi Penduduk Laki-laki", satuan: "jiwa", src: "penduduk" },
+    { id: "proyeksi_perempuan", label: "Proyeksi Penduduk Perempuan", satuan: "jiwa", src: "penduduk" },
     { id: "pertumbuhan_penduduk", label: "Proyeksi Pertumbuhan Penduduk", satuan: "%", src: "penduduk" },
-    { id: "proyeksi_laki", label: "Proyeksi Jumlah Penduduk Laki-laki", satuan: "jiwa", src: "dummy" },
-    { id: "proyeksi_perempuan", label: "Proyeksi Jumlah Penduduk Perempuan", satuan: "jiwa", src: "dummy" },
-    { id: "proyeksi_usia", label: "Proyeksi Penduduk Usia (Balita–Lansia)", satuan: "jiwa", src: "penduduk" },
+    { id: "proyeksi_usia", label: "Proyeksi Penduduk Usia (0-4, 5-18, 15-64, 65+)", satuan: "jiwa", src: "penduduk" },
     { id: "Kepadatan Penduduk", label: "Proyeksi Kepadatan Penduduk", satuan: "jiwa/km²", src: "indikator" },
-    { id: "proyeksi_sex_ratio", label: "Proyeksi Rasio Jenis Kelamin (Sex Ratio)", satuan: "per 100 perempuan", src: "dummy" },
-    { id: "Rasio Ketergantungan", label: "Proyeksi Rasio Ketergantungan (Dependency Ratio)", satuan: "per 100 produktif", src: "indikator" },
-    { id: "proyeksi_bonus_demografi", label: "Proyeksi Bonus Demografi", satuan: "rasio", src: "dummy" },
-    { id: "proyeksi_kecamatan", label: "Proyeksi Penduduk per Kecamatan", satuan: "jiwa", src: "dummy" },
-    { id: "proyeksi_kelurahan", label: "Proyeksi Penduduk per Kelurahan", satuan: "jiwa", src: "dummy" },
-
-    { id: "proyeksi_pekerjaan_formal", label: "Proyeksi Pekerjaan - Formal", satuan: "jiwa", src: "dummy" },
-    { id: "proyeksi_pekerjaan_informal", label: "Proyeksi Pekerjaan - Informal", satuan: "jiwa", src: "dummy" },
-
-    { id: "proyeksi_fasilitas_publik", label: "Proyeksi Kebutuhan Fasilitas Pelayanan Publik", satuan: "unit", src: "dummy" },
-    // Existing indikator & dummy indicators
-    { id: "Laju Pertumbuhan Penduduk", label: "Laju Pertumbuhan Penduduk", satuan: "% per tahun", src: "indikator" },
+    { id: "proyeksi_sex_ratio", label: "Proyeksi Rasio Jenis Kelamin", satuan: "per 100 perempuan", src: "penduduk" },
+    { id: "Rasio Ketergantungan", label: "Proyeksi Rasio Ketergantungan", satuan: "per 100 produktif", src: "indikator" },
+    { id: "proyeksi_pendidikan", label: "Proyeksi Pendidikan (SD–PT)", satuan: "jiwa", src: "penduduk" },
+    { id: "proyeksi_miskin", label: "Proyeksi Penduduk Miskin", satuan: "jiwa", src: "penduduk" },
+    { id: "proyeksi_pendapatan", label: "Proyeksi Pendapatan per Kapita", satuan: "ribu Rp", src: "penduduk" },
+    { id: "proyeksi_sekolah", label: "Proyeksi Jumlah Sekolah", satuan: "unit", src: "penduduk" },
+    { id: "proyeksi_faskes", label: "Proyeksi Jumlah Faskes", satuan: "unit", src: "penduduk" },
+    { id: "proyeksi_pekerjaan_formal", label: "Proyeksi Pekerja Formal", satuan: "jiwa", src: "penduduk" },
+    { id: "proyeksi_pekerjaan_informal", label: "Proyeksi Pekerja Informal", satuan: "jiwa", src: "penduduk" },
+    { id: "proyeksi_penganggur", label: "Proyeksi Penganggur", satuan: "jiwa", src: "penduduk" },
+    { id: "proyeksi_kecamatan_ts", label: "Proyeksi Tegal Selatan", satuan: "jiwa", src: "penduduk" },
+    { id: "proyeksi_kecamatan_tt", label: "Proyeksi Tegal Timur", satuan: "jiwa", src: "penduduk" },
+    { id: "proyeksi_kecamatan_tb", label: "Proyeksi Tegal Barat", satuan: "jiwa", src: "penduduk" },
+    { id: "proyeksi_kecamatan_m", label: "Proyeksi Margadana", satuan: "jiwa", src: "penduduk" },
+    { id: "Laju Pertumbuhan Penduduk", label: "Laju Pertumbuhan Penduduk (BPS)", satuan: "% per tahun", src: "indikator" },
     { id: "TFR (Total Fertility Rate)", label: "Angka Fertilitas (TFR)", satuan: "anak/wanita", src: "indikator" },
     { id: "Angka Harapan Hidup", label: "Angka Harapan Hidup", satuan: "tahun", src: "indikator" },
     { id: "Angka Kematian Bayi (AKB)", label: "Angka Kematian Bayi (AKB)", satuan: "per 1.000 lahir", src: "indikator" },
     { id: "Indeks Pembangunan Manusia (IPM)", label: "Indeks Pembangunan Manusia", satuan: "poin", src: "indikator" },
-    { id: "proyeksi_pendidikan", label: "Proyeksi Pendidikan (SD–PT)", satuan: "jiwa", src: "penduduk" },
-    { id: "tingkat_pengangguran", label: "Tingkat Pengangguran", satuan: "%", src: "dummy" },
-    { id: "pendapatan_per_kapita", label: "Pendapatan per Kapita", satuan: "ribu Rp", src: "dummy" },
-    { id: "tingkat_kemiskinan", label: "Tingkat Kemiskinan", satuan: "%", src: "dummy" },
-    { id: "jumlah_sekolah", label: "Jumlah Sekolah", satuan: "unit", src: "dummy" },
-    { id: "jumlah_faskes", label: "Jumlah Fasilitas Kesehatan", satuan: "unit", src: "dummy" },
   ];
   const BASE_POP_2020 = 284116;
   const [selInd, setSelInd] = useState(PENDUDUK_INDIKATOR[0].id);
@@ -982,28 +954,44 @@ function PrediksiPage() {
   const buildHistori = () => {
     const src = PENDUDUK_INDIKATOR.find(i => i.id === selInd)?.src;
     if (src === "penduduk") {
-      if (selInd === "jumlah_penduduk") {
-        let pop = BASE_POP_2020;
-        const hasil = [{ tahun: 2020, nilai: pop }];
+      const SUM_MAP = {
+        jumlah_penduduk: ["jml_pria", "jml_perempuan"],
+        proyeksi_usia: ["umur_0_4", "umur_5_18", "umur_15_64", "umur_65_plus"],
+        proyeksi_pendidikan: ["jml_pendidikan_sd", "jml_pendidikan_smp", "jml_pendidikan_sma", "jml_pendidikan_pt"],
+      };
+      const sumFields = SUM_MAP[selInd];
+      if (sumFields) {
+        const tahunMap = {};
         for (const s of sortedStats) {
-          if (s.tahun <= 2020) continue;
-          pop = pop + s.datang + s.lahir - s.pindah - s.mati;
-          hasil.push({ tahun: s.tahun, nilai: pop });
+          tahunMap[s.tahun] = sumFields.reduce((acc, f) => acc + (s[f] || 0), 0);
         }
-        return hasil;
+        return Object.entries(tahunMap).sort((a, b) => a[0] - b[0]).map(([tahun, nilai]) => ({ tahun: +tahun, nilai }));
       }
-      if (selInd === "migrasi_netto") {
-        return sortedStats.map(s => ({ tahun: s.tahun, nilai: s.datang - s.pindah }));
-      }
+      if (selInd === "proyeksi_laki") return sortedStats.map(s => ({ tahun: s.tahun, nilai: s.jml_pria || 0 }));
+      if (selInd === "proyeksi_perempuan") return sortedStats.map(s => ({ tahun: s.tahun, nilai: s.jml_perempuan || 0 }));
+      if (selInd === "proyeksi_sex_ratio") return sortedStats.map(s => ({ tahun: s.tahun, nilai: s.jml_perempuan ? parseFloat(((s.jml_pria || 0) / s.jml_perempuan * 100).toFixed(2)) : 0 }));
+      if (selInd === "proyeksi_miskin") return sortedStats.map(s => ({ tahun: s.tahun, nilai: s.jml_miskin || 0 }));
+      if (selInd === "proyeksi_pendapatan") return sortedStats.map(s => ({ tahun: s.tahun, nilai: s.pendapatan_per_kapita || 0 }));
+      if (selInd === "proyeksi_sekolah") return sortedStats.map(s => ({ tahun: s.tahun, nilai: s.jml_sekolah || 0 }));
+      if (selInd === "proyeksi_faskes") return sortedStats.map(s => ({ tahun: s.tahun, nilai: s.jml_faskes || 0 }));
+      if (selInd === "proyeksi_pekerjaan_formal") return sortedStats.map(s => ({ tahun: s.tahun, nilai: s.jml_pekerja_formal || 0 }));
+      if (selInd === "proyeksi_pekerjaan_informal") return sortedStats.map(s => ({ tahun: s.tahun, nilai: s.jml_pekerja_informal || 0 }));
+      if (selInd === "proyeksi_penganggur") return sortedStats.map(s => ({ tahun: s.tahun, nilai: s.jml_penganggur || 0 }));
+      if (selInd === "proyeksi_kecamatan_ts") return sortedStats.map(s => ({ tahun: s.tahun, nilai: s.penduduk_tegal_selatan || 0 }));
+      if (selInd === "proyeksi_kecamatan_tt") return sortedStats.map(s => ({ tahun: s.tahun, nilai: s.penduduk_tegal_timur || 0 }));
+      if (selInd === "proyeksi_kecamatan_tb") return sortedStats.map(s => ({ tahun: s.tahun, nilai: s.penduduk_tegal_barat || 0 }));
+      if (selInd === "proyeksi_kecamatan_m") return sortedStats.map(s => ({ tahun: s.tahun, nilai: s.penduduk_margadana || 0 }));
       if (selInd === "pertumbuhan_penduduk") {
         let hasil = [];
         if (sortedStats.length) {
-          let pop = BASE_POP_2020;
-          for (const s of sortedStats) {
-            if (s.tahun === 2020) { hasil.push({ tahun: 2020, nilai: 0 }); continue; }
-            const growth = ((s.lahir + s.datang - s.mati - s.pindah) / pop) * 100;
-            hasil.push({ tahun: s.tahun, nilai: parseFloat(growth.toFixed(2)) });
-            pop = pop + s.datang + s.lahir - s.pindah - s.mati;
+          for (let i = 0; i < sortedStats.length; i++) {
+            const s = sortedStats[i];
+            if (i === 0) { hasil.push({ tahun: s.tahun, nilai: 0 }); continue; }
+            const prev = sortedStats[i - 1];
+            const popPrev = (prev.jml_pria || 0) + (prev.jml_perempuan || 0);
+            const popCurr = (s.jml_pria || 0) + (s.jml_perempuan || 0);
+            if (popPrev === 0) { hasil.push({ tahun: s.tahun, nilai: 0 }); continue; }
+            hasil.push({ tahun: s.tahun, nilai: parseFloat((((popCurr - popPrev) / popPrev) * 100).toFixed(2)) });
           }
         }
         const fallback = indikatorData["Laju Pertumbuhan Penduduk"]?.data?.["Kota Tegal (Kota)"] || [];
@@ -1015,42 +1003,11 @@ function PrediksiPage() {
         hasil.sort((a, b) => a.tahun - b.tahun);
         return hasil;
       }
-      if (selInd === "proyeksi_pendidikan") {
-        const tahunMap = {};
-        for (const s of sortedStats) {
-          tahunMap[s.tahun] = (s.sd || 0) + (s.smp || 0) + (s.sma || 0) + (s.pt || 0);
-        }
-        return Object.entries(tahunMap).sort((a, b) => a[0] - b[0]).map(([tahun, nilai]) => ({ tahun: +tahun, nilai }));
-      }
-      if (selInd === "proyeksi_usia") {
-        const tahunMap = {};
-        for (const s of sortedStats) {
-          tahunMap[s.tahun] = (s.balita || 0) + (s.sekolah || 0) + (s.produktif || 0) + (s.lansia || 0);
-        }
-        return Object.entries(tahunMap).sort((a, b) => a[0] - b[0]).map(([tahun, nilai]) => ({ tahun: +tahun, nilai }));
-      }
-      const fld = selInd.replace("jumlah_", "").toLowerCase();
-      const mapFld = { kelahiran: "lahir", kematian: "mati" };
-      const ctxFld = mapFld[fld] || fld;
-      return sortedStats.map(s => ({ tahun: s.tahun, nilai: s[ctxFld] }));
+      return [];
     }
     if (src === "indikator") {
       const raw = indikatorData[selInd]?.data?.["Kota Tegal (Kota)"] || [];
       return raw.map(d => ({ tahun: d.tahun, nilai: d.nilai }));
-    }
-    if (src === "dummy") {
-      if (selInd === "proyeksi_pendidikan" || selInd === "proyeksi_usia") {
-        const ids = selInd === "proyeksi_pendidikan"
-          ? ["proyeksi_pendidikan_sd", "proyeksi_pendidikan_smp", "proyeksi_pendidikan_sma", "proyeksi_pendidikan_pt"]
-          : ["proyeksi_balita", "proyeksi_usia_sekolah", "proyeksi_usia_produktif", "proyeksi_lansia"];
-        const datasets = ids.map(id => DUMMY_DATA[id]?.data || []);
-        if (!datasets[0]?.length) return [];
-        const map = {};
-        for (const ds of datasets) { for (const d of ds) { if (!map[d.t]) map[d.t] = 0; map[d.t] += d.v; } }
-        return Object.entries(map).sort((a, b) => a[0] - b[0]).map(([tahun, nilai]) => ({ tahun: +tahun, nilai }));
-      }
-      const raw = DUMMY_DATA[selInd]?.data || [];
-      return raw.map(d => ({ tahun: d.t, nilai: d.v }));
     }
     return [];
   };
@@ -1318,28 +1275,26 @@ PENTING: Jawab HANYA dalam format JSON berikut, tanpa teks tambahan, tanpa markd
 
               {(selInd === "proyeksi_pendidikan" || selInd === "proyeksi_usia") && (() => {
                 const isUsia = selInd === "proyeksi_usia";
-                const fields = isUsia ? ["balita", "sekolah", "produktif", "lansia"] : ["sd", "smp", "sma", "pt"];
-                const labels = isUsia ? ["Balita (0–4)", "Sekolah (5–18)", "Produktif (15–64)", "Lansia (≥65)"] : ["SD", "SMP", "SMA", "PT"];
+                const fields = isUsia ? ["umur_0_4", "umur_5_18", "umur_15_64", "umur_65_plus"] : ["jml_pendidikan_sd", "jml_pendidikan_smp", "jml_pendidikan_sma", "jml_pendidikan_pt"];
+                const labels = isUsia ? ["0–4", "5–18", "15–64", "65+"] : ["SD", "SMP", "SMA", "PT"];
                 const colors = isUsia ? ["#0D9488", "#2563EB", "#D97706", "#7C3AED"] : ["#0D9488", "#2563EB", "#D97706", "#7C3AED"];
-                const getFieldSum = (field, tahun) => sortedStats.filter(s => s.tahun === tahun).reduce((sum, s) => sum + (s[field] || 0), 0);
+                const getFieldVal = (field, tahun) => { const d = sortedStats.find(s => s.tahun === tahun); return d ? (d[field] || 0) : null; };
                 const getPred = (field, year) => {
+                  const years = sortedStats.map(s => s.tahun);
                   const vals = sortedStats.map(s => s[field] || 0);
                   if (vals.length < 2) return 0;
-                  const targetYear = year;
-                  const lastYear = sortedStats[sortedStats.length - 1]?.tahun;
-                  if (targetYear <= lastYear) return getFieldSum(field, targetYear);
+                  const lastYear = years[years.length - 1];
+                  if (year <= lastYear) return getFieldVal(field, year) || 0;
                   let result = [...vals];
-                  for (let y = lastYear + 1; y <= targetYear; y++) {
-                    const pred = knnPredict(result, Math.min(3, result.length - 1));
-                    result.push(pred);
+                  for (let y = lastYear + 1; y <= year; y++) {
+                    result.push(knnPredict(result, Math.min(3, result.length - 1)));
                   }
                   return result[result.length - 1];
                 };
                 return (
                   <div style={{ display: "flex", gap: "0.75rem", padding: "0 1.5rem 1.5rem", flexWrap: "wrap" }}>
                     {fields.map((field, i) => {
-                      const src24 = getFieldSum(field, 2024);
-                      const v2024 = src24 > 0 ? src24 : getPred(field, 2024);
+                      const v2024 = getFieldVal(field, 2024) || getPred(field, 2024);
                       const v2030 = getPred(field, 2030);
                       const v2035 = getPred(field, 2035);
                       return ["2024", "2030", "2035"].map((tahun, j) => {
