@@ -46,9 +46,9 @@ function generatePeriode() {
 export const INITIAL_PERIODE = generatePeriode();
 
 export const INITIAL_ADMINS = [
-  { id_admin: 1, username: "admin",  nama: "Admin SIPENDUK",      level: "superadmin", status: 1 },
-  { id_admin: 2, username: "analis", nama: "Analis Dukcapil",     level: "admin",      status: 1 },
-  { id_admin: 3, username: "tegal",  nama: "Operator Kota Tegal", level: "admin",      status: 1 },
+  { id_admin: 1, username: "admin",  nama: "Admin SIPENDUK",      level: "superadmin", status: 1, nip: "", tempat_lahir: "", tanggal_lahir: "", pangkat: "", status_kepegawaian: "" },
+  { id_admin: 2, username: "analis", nama: "Analis Dukcapil",     level: "admin",      status: 1, nip: "", tempat_lahir: "", tanggal_lahir: "", pangkat: "", status_kepegawaian: "" },
+  { id_admin: 3, username: "tegal",  nama: "Operator Kota Tegal", level: "admin",      status: 1, nip: "", tempat_lahir: "", tanggal_lahir: "", pangkat: "", status_kepegawaian: "" },
 ];
 
 export const DEMO_CREDENTIALS = [
@@ -86,7 +86,7 @@ export function AppProvider({ children }) {
       const saved = localStorage.getItem("sipenduk_periode_v4");
       if (saved) {
         const p = JSON.parse(saved);
-        if (p.length >= INITIAL_PERIODE.length) return p; // keep saved if sufficient
+        if (p.length >= INITIAL_PERIODE.length) return p;
       }
     } catch (_) {}
     return JSON.parse(JSON.stringify(INITIAL_PERIODE));
@@ -122,7 +122,7 @@ export function AppProvider({ children }) {
         const p = JSON.parse(saved);
         const newKeys = Object.keys(DATA_INDIKATOR);
         const savedKeys = Object.keys(p);
-        if (newKeys.every(k => savedKeys.includes(k))) return p; // keep if all keys exist
+        if (newKeys.every(k => savedKeys.includes(k))) return p;
       }
     } catch (_) {}
     return JSON.parse(JSON.stringify(DATA_INDIKATOR));
@@ -187,82 +187,150 @@ export function AppProvider({ children }) {
   const [apiReady, setApiReady] = useState(false);
   useEffect(() => {
     (async () => {
-      const [ind, pir, rad, cap, prof, pen, per, adm] = await Promise.all([
-        api.getIndikator(),
-        api.getPiramida(),
-        api.getRadar(),
-        api.getCapaian(),
-        api.getProfilKecamatan(),
+      const [pen, per, adm] = await Promise.all([
         api.getPenduduk(),
         api.getPeriode(),
         api.getAdmin(),
       ]);
-      if (ind) setIndikatorData(ind);
-      if (pir) setPiramidaData(pir);
-      if (rad) setRadarKecamatan(rad);
-      if (cap) setCapaianData(cap);
-      if (prof) setProfilKecamatan(prev => {
-        const merged = { ...prev };
-        Object.keys(prof).forEach(k => {
-          if (prev[k]) merged[k] = { ...prev[k], ...prof[k] };
-          else merged[k] = prof[k];
-        });
-        return merged;
-      });
-      if (pen && pen.length > 0) setPendudukData(pen);
+      if (pen && pen.length > 0) {
+        setPendudukData(pen);
+      }
       if (per && per.length > 0) setPeriodeData(per);
       if (adm && adm.length > 0) {
-        setAdminUsers(adm.map((u, i) => ({ id_admin: i + 1, username: u.username, nama: u.name, level: u.role, status: 1 })));
+        // Normalisasi data dari backend
+        const backendAdmins = adm.map((u, i) => ({
+          id_admin: i + 1,
+          username: u.username,
+          nama: u.name || u.nama,
+          level: u.role || u.level,
+          status: 1,
+          nip: u.nip || "",
+          tempat_lahir: u.tempat_lahir || "",
+          tanggal_lahir: u.tanggal_lahir || "",
+          pangkat: u.pangkat || "",
+          status_kepegawaian: u.status_kepegawaian || "",
+        }));
+        // Gabungkan dengan data localStorage: akun yang tidak ada di backend tetap dipertahankan
+        setAdminUsers(prev => {
+          const backendUsernames = new Set(backendAdmins.map(a => a.username));
+          const localOnly = prev.filter(a => !backendUsernames.has(a.username));
+          const maxId = backendAdmins.reduce((m, a) => Math.max(m, a.id_admin), 0);
+          const localOnlyWithIds = localOnly.map((a, i) => ({ ...a, id_admin: maxId + i + 1 }));
+          return [...backendAdmins, ...localOnlyWithIds];
+        });
         setApiReady(true);
       }
     })();
   }, []);
 
   // ══════════════════════════════════════════════════════════
-  //  PENDUDUK CRUD
+  //  PENDUDUK CRUD — PRIMER (migrasi: pindah, datang, lahir, mati)
   // ══════════════════════════════════════════════════════════
-  const addPenduduk = useCallback((record) => {
+  const addPendudukPrimer = useCallback((record) => {
     setPendudukData(prev => {
       const newId = (prev.length > 0 ? Math.max(...prev.map(d => d.id_penduduk)) : 0) + 1;
       const entry = { ...record, id_penduduk: newId };
-      api.addPenduduk(record); // sync ke backend, ignore error
+      api.addPendudukPrimer(record);
       return [...prev, entry];
     });
   }, []);
 
-  const updatePenduduk = useCallback((id, updates) => {
+  const updatePendudukPrimer = useCallback((id, updates) => {
     setPendudukData(prev =>
       prev.map(d => d.id_penduduk === id ? { ...d, ...updates, id_penduduk: id } : d)
     );
-    api.updatePenduduk(id, updates);
+    api.updatePendudukPrimer(id, updates);
   }, []);
 
-  const deletePenduduk = useCallback((id) => {
+  const deletePendudukPrimer = useCallback((id) => {
     setPendudukData(prev => prev.filter(d => d.id_penduduk !== id));
-    api.deletePenduduk(id);
+    api.deletePendudukPrimer(id);
   }, []);
 
-  const importPenduduk = useCallback((records) => {
+  const importPendudukPrimer = useCallback((records) => {
     setPendudukData(prev => {
       const maxId = prev.length > 0 ? Math.max(...prev.map(d => d.id_penduduk)) : 0;
-      const NEW_FIELDS = ["jml_pria","jml_perempuan","umur_0_4","umur_5_18","umur_15_64","umur_65_plus","penduduk_tegal_selatan","penduduk_tegal_timur","penduduk_tegal_barat","penduduk_margadana","jml_miskin","pendapatan_per_kapita","jml_sekolah","jml_faskes","jml_pekerja_formal","jml_pekerja_informal","jml_penganggur","jml_pendidikan_sd","jml_pendidikan_smp","jml_pendidikan_sma","jml_pendidikan_pt"];
+      const entries = records.map((r, i) => {
+        const entry = {
+          id_penduduk: maxId + i + 1,
+          id_priode: r.tahun - 1995,
+          tahun: r.tahun,
+          jumlah_pindah: r.jumlah_pindah || 0,
+          jumlah_datang: r.jumlah_datang || 0,
+          jumlah_kelahiran: r.jumlah_kelahiran || 0,
+          jumlah_kematian: r.jumlah_kematian || 0,
+          jumlah_penduduk: r.jumlah_penduduk || 0,
+        };
+        return entry;
+      });
+      api.bulkAddPendudukPrimer(entries);
+      return [...prev, ...entries];
+    });
+  }, []);
+
+  const SEKUNDER_FIELDS = useMemo(() => [
+    "jml_pria","jml_perempuan","umur_0_4","umur_5_18","umur_15_64","umur_65_plus",
+    "penduduk_tegal_selatan","penduduk_tegal_timur","penduduk_tegal_barat","penduduk_margadana",
+    "jml_miskin","pendapatan_per_kapita","jml_sekolah","jml_faskes",
+    "jml_pekerja_formal","jml_pekerja_informal","jml_penganggur",
+    "jml_pendidikan_sd","jml_pendidikan_smp","jml_pendidikan_sma","jml_pendidikan_pt",
+  ], []);
+
+  const clearAllPendudukPrimer = useCallback(() => {
+    setPendudukData(prev => prev.filter(d => {
+      const hasSekunder = SEKUNDER_FIELDS.some(k => (d[k] || 0) > 0);
+      return hasSekunder;
+    }));
+    api.clearAllPendudukPrimer();
+  }, [SEKUNDER_FIELDS]);
+
+  // ══════════════════════════════════════════════════════════
+  //  PENDUDUK CRUD — SEKUNDER (demografi: gender, usia, kec, sosial, TK, pend)
+  // ══════════════════════════════════════════════════════════
+  const addPendudukSekunder = useCallback((record) => {
+    setPendudukData(prev => {
+      const newId = (prev.length > 0 ? Math.max(...prev.map(d => d.id_penduduk)) : 0) + 1;
+      const entry = { ...record, id_penduduk: newId };
+      api.addPendudukSekunder(record);
+      return [...prev, entry];
+    });
+  }, []);
+
+  const updatePendudukSekunder = useCallback((id, updates) => {
+    setPendudukData(prev =>
+      prev.map(d => d.id_penduduk === id ? { ...d, ...updates, id_penduduk: id } : d)
+    );
+    api.updatePendudukSekunder(id, updates);
+  }, []);
+
+  const deletePendudukSekunder = useCallback((id) => {
+    setPendudukData(prev => prev.filter(d => d.id_penduduk !== id));
+    api.deletePendudukSekunder(id);
+  }, []);
+
+  const importPendudukSekunder = useCallback((records) => {
+    setPendudukData(prev => {
+      const maxId = prev.length > 0 ? Math.max(...prev.map(d => d.id_penduduk)) : 0;
       const entries = records.map((r, i) => {
         const entry = {
           id_penduduk: maxId + i + 1,
           id_priode: r.tahun - 1995,
           tahun: r.tahun,
         };
-        NEW_FIELDS.forEach(k => { entry[k] = r[k] || 0; });
+        SEKUNDER_FIELDS.forEach(k => { entry[k] = r[k] || 0; });
         return entry;
       });
-      api.bulkAddPenduduk(entries);
+      api.bulkAddPendudukSekunder(entries);
       return [...prev, ...entries];
     });
-  }, []);
+  }, [SEKUNDER_FIELDS]);
 
-  const clearAllPenduduk = useCallback(() => {
-    setPendudukData([]);
-    api.clearAllPenduduk();
+  const clearAllPendudukSekunder = useCallback(() => {
+    setPendudukData(prev => prev.filter(d => {
+      const hasPrimer = d.jumlah_pindah || d.jumlah_datang || d.jumlah_kelahiran || d.jumlah_kematian || d.jumlah_penduduk;
+      return !!hasPrimer;
+    }));
+    api.clearAllPendudukSekunder();
   }, []);
 
   // ══════════════════════════════════════════════════════════
@@ -414,7 +482,7 @@ export function AppProvider({ children }) {
   }, []);
 
   const ALL_PENDUDUK_FIELDS = useMemo(() => [
-    "jumlah_pindah", "jumlah_datang", "jumlah_kelahiran", "jumlah_kematian",
+    "jumlah_pindah", "jumlah_datang", "jumlah_kelahiran", "jumlah_kematian", "jumlah_penduduk",
     "jml_pria", "jml_perempuan",
     "umur_0_4", "umur_5_18", "umur_15_64", "umur_65_plus",
     "penduduk_tegal_selatan", "penduduk_tegal_timur", "penduduk_tegal_barat", "penduduk_margadana",
@@ -427,7 +495,7 @@ export function AppProvider({ children }) {
   //  COMPUTED / DERIVED DATA
   // ══════════════════════════════════════════════════════════
   const getSummaryStats = useCallback(() => {
-    const init = { jumlah_pindah: 0, jumlah_datang: 0, jumlah_kelahiran: 0, jumlah_kematian: 0 };
+    const init = { jumlah_pindah: 0, jumlah_datang: 0, jumlah_kelahiran: 0, jumlah_kematian: 0, jumlah_penduduk: 0 };
     ALL_PENDUDUK_FIELDS.forEach(f => { init[f] = 0; });
     const t = pendudukData.reduce((a, d) => {
       ALL_PENDUDUK_FIELDS.forEach(f => { a[f] += d[f] || 0; });
@@ -470,12 +538,18 @@ export function AppProvider({ children }) {
     radarKecamatan,
     capaianData,
     profilKecamatan,
-    // Penduduk CRUD
-    addPenduduk,
-    updatePenduduk,
-    deletePenduduk,
-    importPenduduk,
-    clearAllPenduduk,
+    // Penduduk CRUD — Primer
+    addPendudukPrimer,
+    updatePendudukPrimer,
+    deletePendudukPrimer,
+    importPendudukPrimer,
+    clearAllPendudukPrimer,
+    // Penduduk CRUD — Sekunder
+    addPendudukSekunder,
+    updatePendudukSekunder,
+    deletePendudukSekunder,
+    importPendudukSekunder,
+    clearAllPendudukSekunder,
     // Periode CRUD
     addPeriode,
     updatePeriode,

@@ -75,8 +75,23 @@ function LandingPage({ onLogin, onEnterDashboard }) {
       onLogin(apiUser);
       return;
     }
-    // Fallback ke local DEMO_USERS
+    // Fallback ke data lokal: cek adminUsers di localStorage + DEMO_USERS hardcoded
     await new Promise(r => setTimeout(r, 600));
+    // Baca adminUsers dari localStorage
+    let localAdmins = [];
+    try {
+      const saved = localStorage.getItem("sipenduk_admins_v4");
+      if (saved) localAdmins = JSON.parse(saved);
+    } catch (_) {}
+    // Cari akun di localStorage (yang punya password tersimpan)
+    const localUser = localAdmins.find(u => u.username === username && u.password === password);
+    if (localUser) {
+      setLoginLoading(false);
+      setShowLogin(false);
+      onLogin({ username: localUser.username, name: localUser.nama, role: localUser.level });
+      return;
+    }
+    // Fallback terakhir ke DEMO_USERS hardcoded
     const user = DEMO_USERS.find(u => u.username === username && u.password === password);
     if (user) {
       setLoginLoading(false);
@@ -610,6 +625,7 @@ const TABS = [
   { id: "beranda", label: "Beranda", icon: "🏠" },
   { id: "dashboard", label: "Dashboard", icon: "📊" },
   { id: "piramida", label: "Piramida", icon: "🔺" },
+  { id: "proyeksi", label: "Proyeksi", icon: "🔮" },
   { id: "analisis", label: "Analisis", icon: "📈" },
   { id: "kecamatan", label: "Kecamatan", icon: "🗺️" },
   { id: "tabel", label: "Tabel Data", icon: "📋" },
@@ -1007,7 +1023,182 @@ function TabPiramida() {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// TAB 4 — ANALISIS
+// TAB 4 — PROYEKSI (Data Admin + Proyeksi Linear)
+// ═══════════════════════════════════════════════════════════════
+function estimateTrend(series) {
+  const n = series.length;
+  if (n < 2) return series[n - 1] || 0;
+  let sumX = 0, sumY = 0, sumXY = 0, sumX2 = 0;
+  for (let i = 0; i < n; i++) {
+    sumX += i; sumY += series[i];
+    sumXY += i * series[i]; sumX2 += i * i;
+  }
+  const denom = n * sumX2 - sumX * sumX || 1;
+  const slope = (n * sumXY - sumX * sumY) / denom;
+  const intercept = (sumY - slope * sumX) / n;
+  return slope * n + intercept;
+}
+function smartRound(val, series) {
+  const avgAbs = series.reduce((s, v) => s + Math.abs(v), 0) / Math.max(series.length, 1);
+  if (avgAbs < 100) return parseFloat(val.toFixed(2));
+  if (avgAbs < 1000) return Math.round(val * 100) / 100;
+  return Math.round(val);
+}
+function predictNext(series) {
+  if (series.length < 2) return series[0] || 0;
+  return smartRound(estimateTrend(series), series);
+}
+
+const PROYEKSI_INDIKATOR = [
+  { key: "total", label: "Jumlah Penduduk", color: "#0D9488", satuan: "jiwa", fn: d => (d.jml_pria||0) + (d.jml_perempuan||0) },
+  { key: "pria", label: "Penduduk Laki-laki", color: "#2563EB", satuan: "jiwa", fn: d => d.jml_pria||0 },
+  { key: "perempuan", label: "Penduduk Perempuan", color: "#BE185D", satuan: "jiwa", fn: d => d.jml_perempuan||0 },
+  { key: "pertumbuhan", label: "Pertumbuhan Penduduk", color: "#D97706", satuan: "%", fn: (d, _, prevTotal) => prevTotal != null ? +(((d.jml_pria||0)+(d.jml_perempuan||0) - prevTotal) / prevTotal * 100).toFixed(2) : 0 },
+  { key: "usia", label: "Penduduk Usia (0–4, 5–18, 15–64, 65+)", color: "#7C3AED", satuan: "jiwa", fn: d => (d.umur_0_4||0)+(d.umur_5_18||0)+(d.umur_15_64||0)+(d.umur_65_plus||0) },
+  { key: "kepadatan", label: "Kepadatan Penduduk", color: "#0891B2", satuan: "jiwa/km²", fn: d => Math.round(((d.jml_pria||0)+(d.jml_perempuan||0)) / 39.68) },
+  { key: "sex_ratio", label: "Rasio Jenis Kelamin", color: "#0E7490", satuan: "%", fn: d => d.jml_perempuan ? +((d.jml_pria||0) / d.jml_perempuan * 100).toFixed(1) : 0 },
+  { key: "rasio_ketergantungan", label: "Rasio Ketergantungan", color: "#B45309", satuan: "%", fn: d => (d.umur_15_64||0) ? +(( (d.umur_0_4||0)+(d.umur_65_plus||0) ) / (d.umur_15_64||0) * 100).toFixed(1) : 0 },
+  { key: "pendidikan", label: "Pendidikan (SD–PT)", color: "#0369A1", satuan: "jiwa", fn: d => (d.jml_pendidikan_sd||0)+(d.jml_pendidikan_smp||0)+(d.jml_pendidikan_sma||0)+(d.jml_pendidikan_pt||0) },
+  { key: "miskin", label: "Penduduk Miskin", color: "#DC2626", satuan: "jiwa", fn: d => d.jml_miskin||0 },
+  { key: "pendapatan", label: "Pendapatan per Kapita", color: "#16A34A", satuan: "ribu IDR", fn: d => d.pendapatan_per_kapita||0 },
+  { key: "sekolah", label: "Jumlah Sekolah", color: "#CA8A04", satuan: "unit", fn: d => d.jml_sekolah||0 },
+  { key: "faskes", label: "Jumlah Faskes", color: "#E11D48", satuan: "unit", fn: d => d.jml_faskes||0 },
+  { key: "pekerja_formal", label: "Pekerja Formal", color: "#1D4ED8", satuan: "jiwa", fn: d => d.jml_pekerja_formal||0 },
+  { key: "pekerja_informal", label: "Pekerja Informal", color: "#9333EA", satuan: "jiwa", fn: d => d.jml_pekerja_informal||0 },
+  { key: "penganggur", label: "Penganggur", color: "#B91C1C", satuan: "jiwa", fn: d => d.jml_penganggur||0 },
+  { key: "kec_selatan", label: "Kec. Tegal Selatan", color: "#0D9488", satuan: "jiwa", fn: d => d.penduduk_tegal_selatan||0 },
+  { key: "kec_timur", label: "Kec. Tegal Timur", color: "#2563EB", satuan: "jiwa", fn: d => d.penduduk_tegal_timur||0 },
+  { key: "kec_barat", label: "Kec. Tegal Barat", color: "#D97706", satuan: "jiwa", fn: d => d.penduduk_tegal_barat||0 },
+  { key: "kec_margadana", label: "Kec. Margadana", color: "#7C3AED", satuan: "jiwa", fn: d => d.penduduk_margadana||0 },
+];
+
+function TabProyeksi() {
+  const { getYearlyStats } = useAppContext();
+  const yearly = getYearlyStats();
+  const filtered = yearly.filter(d => d.tahun >= 2017).sort((a, b) => a.tahun - b.tahun);
+  const [selKey, setSelKey] = useState(PROYEKSI_INDIKATOR[0].key);
+  const [activeKey, setActiveKey] = useState(PROYEKSI_INDIKATOR[0].key);
+
+  const buildChartData = (ind) => {
+    const hist = []; let prevTotal = null;
+    filtered.forEach(d => {
+      const totalPop = (d.jml_pria||0) + (d.jml_perempuan||0);
+      const val = ind.key === "pertumbuhan" ? ind.fn(d, null, prevTotal) : ind.fn(d);
+      hist.push({ tahun: d.tahun, nilai: val, isProyeksi: false });
+      prevTotal = totalPop;
+    });
+    const histVals = hist.map(h => h.nilai).filter(v => v != null && isFinite(v));
+    if (histVals.length < 2) return hist;
+    const lastYear = filtered.at(-1).tahun;
+    const proy = [];
+    let curSeries = [...histVals];
+    for (let y = lastYear + 1; y <= 2035; y++) {
+      const nextVal = predictNext(curSeries);
+      proy.push({ tahun: y, nilai: nextVal, isProyeksi: true });
+      curSeries.push(nextVal);
+    }
+    return [...hist, ...proy];
+  };
+
+  const activeInd = PROYEKSI_INDIKATOR.find(i => i.key === activeKey);
+  const chartData = activeInd ? buildChartData(activeInd) : [];
+
+  const getStatSummary = (data) => {
+    const hist = data.filter(d => !d.isProyeksi);
+    const proy = data.filter(d => d.isProyeksi);
+    const lastHist = hist.at(-1);
+    const lastProy = proy.filter(p => p.tahun <= 2035).at(-1);
+    const proy2025 = proy.find(p => p.tahun === 2025);
+    const proy2030 = proy.find(p => p.tahun === 2030);
+    const proy2035 = proy.find(p => p.tahun === 2035);
+    return { lastHist, lastProy, proy2025, proy2030, proy2035 };
+  };
+
+  return (
+    <div className="tab-page">
+      <div className="page-header">
+        <h2 className="section-title">🔮 Proyeksi Kependudukan Kota Tegal</h2>
+        <p className="section-desc">Proyeksi 20 indikator kependudukan berdasarkan data admin (2017–2035) — data historis sebelum 2017 tidak ditampilkan</p>
+      </div>
+      <div className="filter-row">
+        <div className="filter-group">
+          <label className="filter-label">Pilih Indikator</label>
+          <select className="select-input" value={selKey} onChange={e => setSelKey(e.target.value)} id="proy-ind">
+            {PROYEKSI_INDIKATOR.map(ind => <option key={ind.key} value={ind.key}>{ind.label}</option>)}
+          </select>
+        </div>
+        <button className="btn-primary" onClick={() => setActiveKey(selKey)} id="btn-proyeksi-tampil">Tampilkan</button>
+      </div>
+      {activeInd && chartData.length > 0 ? (
+        <div className="chart-card">
+          <div className="chart-header">
+            <div>
+              <div className="chart-title">{activeInd.label}</div>
+              <div className="chart-subtitle">Satuan: {activeInd.satuan} — Data Aktual (solid) + Proyeksi (putus-putus)</div>
+            </div>
+          </div>
+          <ResponsiveContainer width="100%" height={310}>
+            <AreaChart data={chartData} key={`proy-${activeKey}`} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+              <defs>
+                <linearGradient id={`gproy-${activeKey}`} x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor={activeInd.color} stopOpacity={0.28} />
+                  <stop offset="95%" stopColor={activeInd.color} stopOpacity={0.02} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke={C.border} />
+              <XAxis dataKey="tahun" stroke={C.borderMid} tick={{ fill: C.tMuted, fontSize: 11 }} domain={["dataMin", "dataMax"]} />
+              <YAxis stroke={C.borderMid} tick={{ fill: C.tMuted, fontSize: 11 }} />
+              <Tooltip content={<CustomTooltip satuan={activeInd.satuan} />} cursor={{ stroke: C.borderMid, strokeDasharray: "3 3" }} />
+              <Area type="monotone" dataKey="nilai" name={activeInd.label} stroke={activeInd.color} strokeWidth={2.5} fill={`url(#gproy-${activeKey})`} dot={false} activeDot={{ r: 6, fill: activeInd.color, stroke: "#fff", strokeWidth: 2 }} animationDuration={800} />
+            </AreaChart>
+          </ResponsiveContainer>
+          {(() => { const s = getStatSummary(chartData); return (
+            <div style={{ display: "flex", gap: "1.5rem", marginTop: "1rem", paddingTop: "0.875rem", borderTop: `1px solid ${C.border}`, flexWrap: "wrap" }}>
+              {s.lastHist && <div style={{ fontSize: "0.75rem", color: C.tMuted }}>Data Terakhir: <strong style={{ color: C.tDark }}>{s.lastHist.tahun} — {s.lastHist.nilai.toLocaleString("id-ID")} {activeInd.satuan}</strong></div>}
+              {s.proy2025 && <div style={{ fontSize: "0.75rem", color: C.tMuted }}>Proyeksi 2025: <strong style={{ color: "#D97706" }}>{s.proy2025.nilai.toLocaleString("id-ID")} {activeInd.satuan}</strong></div>}
+              {s.proy2030 && <div style={{ fontSize: "0.75rem", color: C.tMuted }}>Proyeksi 2030: <strong style={{ color: activeInd.color }}>{s.proy2030.nilai.toLocaleString("id-ID")} {activeInd.satuan}</strong></div>}
+              {s.proy2035 && <div style={{ fontSize: "0.75rem", color: C.tMuted }}>Proyeksi 2035: <strong style={{ color: "#15803D" }}>{s.proy2035.nilai.toLocaleString("id-ID")} {activeInd.satuan}</strong></div>}
+            </div>
+          ); })()}
+        </div>
+      ) : (
+        <div className="chart-card">
+          <div className="empty-msg" style={{ padding: "2rem", textAlign: "center", color: C.tMuted }}>
+            Belum ada data. Masukkan data penduduk melalui panel Admin terlebih dahulu.
+          </div>
+        </div>
+      )}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(170px,1fr))", gap: "0.75rem", marginTop: "1.25rem" }}>
+        {PROYEKSI_INDIKATOR.map(ind => {
+          const data = buildChartData(ind);
+          const hist = data.filter(d => !d.isProyeksi);
+          const last = hist.at(-1);
+          const proj = data.filter(d => d.isProyeksi).find(d => d.tahun === 2035);
+          if (!last) return null;
+          return (
+            <div key={ind.key} className="chart-card" style={{ cursor: "pointer", padding: "1rem" }}
+              onClick={() => { setSelKey(ind.key); setActiveKey(ind.key); }}>
+              <div style={{ fontSize: "0.62rem", color: C.tMuted, marginBottom: "0.2rem", fontWeight: 700, textTransform: "uppercase" }}>{ind.label}</div>
+              <div style={{ fontFamily: "'Sora',sans-serif", fontSize: "1.1rem", fontWeight: 700, color: C.g800 }}>
+                {proj ? proj.nilai.toLocaleString("id-ID") : "—"}
+              </div>
+              <div style={{ fontSize: "0.6rem", color: C.tMuted }}>Proy. 2035 · {ind.satuan}</div>
+              <div style={{ marginTop: "0.375rem", display: "flex", justifyContent: "space-between", fontSize: "0.6rem", color: C.tMuted }}>
+                <span>′{last.tahun}: {last.nilai.toLocaleString("id-ID")}</span>
+                {proj && <span style={{ color: proj.nilai >= last.nilai ? "#15803D" : C.red }}>
+                  {proj.nilai >= last.nilai ? "↑" : "↓"}
+                </span>}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════
+// TAB 5 — ANALISIS
 // ═══════════════════════════════════════════════════════════════
 function TabAnalisis() {
   const { indikatorData, radarKecamatan, capaianData } = useAppContext();
@@ -1097,7 +1288,7 @@ function TabAnalisis() {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// TAB 5 — KECAMATAN
+// TAB 6 — KECAMATAN
 // ═══════════════════════════════════════════════════════════════
 function KecamatanCard({ name, data }) {
   return (
@@ -1149,7 +1340,7 @@ function TabKecamatan() {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// TAB 6 — TABEL DATA
+// TAB 7 — TABEL DATA
 // ═══════════════════════════════════════════════════════════════
 function TabTabel() {
   const { indikatorData } = useAppContext();
@@ -1203,11 +1394,14 @@ function TabTabel() {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// TAB 7 — AI (OpenCode Zen + DeepSeek V4 Flash Free)
+// TAB 8 — AI (OpenCode Zen + DeepSeek V4 Flash Free)
 // ═══════════════════════════════════════════════════════════════
 const ZEN_BASE = import.meta.env.DEV ? "/zen" : "https://opencode.ai/zen/v1";
 const ZEN_MODEL = "deepseek-v4-flash-free";
-const ZEN_API_KEY = "sk-zAsyEJeJ1l8RHm4AM5skeiAuJm4PDJ7X6cETRrQ0sRHD1woWWcxCIIwlnAyn9i0b";
+const ZEN_API_KEY = import.meta.env.VITE_ZEN_API_KEY || "";
+// ⚠️ Jika API key kosong, AI chat tidak akan berfungsi.
+// Buat file .env (jika belum ada) dan isi: VITE_ZEN_API_KEY=sk-xxx
+// Dapatkan key di https://opencode.ai/zen/v1/api-keys
 
 function TabAI() {
   const [messages, setMessages] = useState([{ role: "ai", content: "Halo! Saya **SIPENDUK-AI** 🤖\n\nSiap membantu analisis data kependudukan Kota Tegal 2020–2035. Silakan ajukan pertanyaan!" }]);
@@ -1413,6 +1607,7 @@ export default function App() {
       case "beranda": return <TabBeranda onGoAdmin={user ? () => setPage("admin") : null} />;
       case "dashboard": return <TabDashboard />;
       case "piramida": return <TabPiramida />;
+      case "proyeksi": return <TabProyeksi />;
       case "analisis": return <TabAnalisis />;
       case "kecamatan": return <TabKecamatan />;
       case "tabel": return <TabTabel />;

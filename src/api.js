@@ -52,13 +52,24 @@ export const api = {
   addPeriode: (data) => send("POST", "/periode", data),
   deletePeriode: (id) => send("DELETE", `/periode/${id}`),
 
-  // Penduduk
+  // Penduduk (merged read)
   getPenduduk: () => get("/penduduk"),
-  addPenduduk: (data) => send("POST", "/penduduk", data),
-  updatePenduduk: (id, data) => send("PUT", `/penduduk/${id}`, data),
-  deletePenduduk: (id) => send("DELETE", `/penduduk/${id}`),
-  bulkAddPenduduk: (records) => send("POST", "/penduduk/bulk", records),
-  clearAllPenduduk: () => send("DELETE", "/penduduk"),
+
+  // — Primer CRUD (migrasi: pindah, datang, lahir, mati)
+  getPendudukPrimer: () => get("/penduduk/primer"),
+  addPendudukPrimer: (data) => send("POST", "/penduduk/primer", data),
+  updatePendudukPrimer: (id, data) => send("PUT", `/penduduk/primer/${id}`, data),
+  deletePendudukPrimer: (id) => send("DELETE", `/penduduk/primer/${id}`),
+  bulkAddPendudukPrimer: (records) => send("POST", "/penduduk/primer/bulk", records),
+  clearAllPendudukPrimer: () => send("DELETE", "/penduduk/primer"),
+
+  // — Sekunder CRUD (demografi: gender, usia, kecamatan, sosial, TK, pendidikan)
+  getPendudukSekunder: () => get("/penduduk/sekunder"),
+  addPendudukSekunder: (data) => send("POST", "/penduduk/sekunder", data),
+  updatePendudukSekunder: (id, data) => send("PUT", `/penduduk/sekunder/${id}`, data),
+  deletePendudukSekunder: (id) => send("DELETE", `/penduduk/sekunder/${id}`),
+  bulkAddPendudukSekunder: (records) => send("POST", "/penduduk/sekunder/bulk", records),
+  clearAllPendudukSekunder: () => send("DELETE", "/penduduk/sekunder"),
 
   // Admin
   getAdmin: () => get("/admin"),

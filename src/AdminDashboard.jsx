@@ -6,7 +6,7 @@
 //  laporan.
 // ══════════════════════════════════════════════════════════════
 
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import {
   LineChart, Line, BarChart, Bar, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend,
@@ -436,7 +436,7 @@ function DashboardPage({ onNav }) {
         <div style={{ overflowX: "auto" }}>
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.8rem" }}>
             <thead><tr style={{ background: `${P}10` }}>
-              {["No", "Tahun", "Pindah", "Datang", "Kelahiran", "Kematian"].map(h => (
+              {["No", "Tahun", "Pindah", "Datang", "Kelahiran", "Kematian", "Penduduk"].map(h => (
                 <th key={h} style={{ padding: "0.625rem 0.875rem", textAlign: "left", fontWeight: 700, color: P, fontSize: "0.68rem", textTransform: "uppercase", letterSpacing: "0.05em" }}>{h}</th>
               ))}
             </tr></thead>
@@ -448,6 +448,7 @@ function DashboardPage({ onNav }) {
                 <td style={{ padding: "0.55rem 0.875rem", fontFamily: "monospace", color: SUC, fontWeight: 600 }}>{(d.jumlah_datang || 0).toLocaleString()}</td>
                 <td style={{ padding: "0.55rem 0.875rem", fontFamily: "monospace", color: "#2563EB", fontWeight: 600 }}>{(d.jumlah_kelahiran || 0).toLocaleString()}</td>
                 <td style={{ padding: "0.55rem 0.875rem", fontFamily: "monospace", color: WRN, fontWeight: 600 }}>{(d.jumlah_kematian || 0).toLocaleString()}</td>
+                <td style={{ padding: "0.55rem 0.875rem", fontFamily: "monospace", color: T, fontWeight: 700 }}>{(d.jumlah_penduduk || 0).toLocaleString()}</td>
               </tr>
             ))}</tbody>
           </table>
@@ -493,11 +494,11 @@ const NEW_FIELDS = [
   { k: "jml_pendidikan_sma", l: "Jumlah Pendidikan SMA", g: "pendidikan" },
   { k: "jml_pendidikan_pt", l: "Jumlah Pendidikan PT", g: "pendidikan" },
 ];
-const emptyForm = { id_priode: 1, tahun: 2024, jumlah_pindah: "", jumlah_datang: "", jumlah_kelahiran: "", jumlah_kematian: "" };
+const emptyForm = { id_priode: 1, tahun: 2024, jumlah_pindah: "", jumlah_datang: "", jumlah_kelahiran: "", jumlah_kematian: "", jumlah_penduduk: "" };
 
 
 
-function ImportModalUI({ showImport, setShowImport, importRaw, setImportRaw, importPreview, setImportPreview, addToast, importPenduduk, BDR, W, BG, DNG, SUC, WRN, M, T, P }) {
+function ImportModalUI({ showImport, setShowImport, importRaw, setImportRaw, importPreview, setImportPreview, addToast, importPendudukPrimer, BDR, W, BG, DNG, SUC, WRN, M, T, P }) {
   return (
     <div style={{ position: "fixed", inset: 0, zIndex: 8000, background: "rgba(0,0,0,0.45)", display: "flex", alignItems: "center", justifyContent: "center", padding: "1rem" }}
       onClick={e => { if (e.target === e.currentTarget) setShowImport(false); }}>
@@ -506,7 +507,7 @@ function ImportModalUI({ showImport, setShowImport, importRaw, setImportRaw, imp
           <span style={{ fontSize: "1.3rem" }}>📤</span>
           <div style={{ flex: 1 }}>
             <div style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontWeight: 700, color: W, fontSize: "1rem" }}>Import Data Primer</div>
-            <div style={{ fontSize: "0.75rem", color: "rgba(255,255,255,0.8)", marginTop: "0.15rem" }}>CSV / tab separated — kolom: tahun, pindah, datang, lahir, mati (data migrasi primer)</div>
+            <div style={{ fontSize: "0.75rem", color: "rgba(255,255,255,0.8)", marginTop: "0.15rem" }}>CSV / tab separated — kolom: tahun, pindah, datang, lahir, mati, penduduk (data migrasi primer)</div>
           </div>
           <button onClick={() => setShowImport(false)} style={{ background: "rgba(255,255,255,0.2)", border: "none", borderRadius: 6, color: W, fontSize: "1.1rem", width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>✕</button>
         </div>
@@ -539,9 +540,9 @@ function ImportModalUI({ showImport, setShowImport, importRaw, setImportRaw, imp
             lines.forEach((line, i) => {
               let parts = line.split("\t").length > 1 ? line.split("\t") : line.split(",");
               parts = parts.map(p => p.replace(/["\r]/g, "").trim());
-              const nums = parts.filter(p => p !== "").slice(0, 5).map(p => parseInt(p));
-              if (nums.length < 5 || nums.some(n => isNaN(n))) { errors.push(`Baris ${i + 1}: format: tahun, pindah, datang, lahir, mati`); return; }
-              parsed.push({ tahun: nums[0], jumlah_pindah: nums[1], jumlah_datang: nums[2], jumlah_kelahiran: nums[3], jumlah_kematian: nums[4] });
+              const nums = parts.filter(p => p !== "").slice(0, 6).map(p => parseInt(p));
+              if (nums.length < 6 || nums.some(n => isNaN(n))) { errors.push(`Baris ${i + 1}: format: tahun, pindah, datang, lahir, mati, penduduk`); return; }
+              parsed.push({ tahun: nums[0], jumlah_pindah: nums[1], jumlah_datang: nums[2], jumlah_kelahiran: nums[3], jumlah_kematian: nums[4], jumlah_penduduk: nums[5] });
             });
             if (errors.length) {
               addToast(`⚠️ ${errors.length} error:\n${errors.slice(0, 5).join("\n")}`, "error");
@@ -555,7 +556,7 @@ function ImportModalUI({ showImport, setShowImport, importRaw, setImportRaw, imp
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "0.625rem" }}>
                 <span style={{ fontWeight: 700, color: T, fontSize: "0.88rem" }}>📋 Pratinjau: <strong style={{ color: "#7C3AED" }}>{importPreview.length}</strong> record</span>
                 <button onClick={() => {
-                  importPenduduk(importPreview);
+                  importPendudukPrimer(importPreview);
                   addToast(`✅ ${importPreview.length} data penduduk berhasil diimport!`, "success");
                   setShowImport(false);
                   setImportPreview([]);
@@ -573,6 +574,7 @@ function ImportModalUI({ showImport, setShowImport, importRaw, setImportRaw, imp
                     <th style={{ padding: "0.4rem 0.625rem", textAlign: "right", fontWeight: 700, color: "#7C3AED" }}>Datang</th>
                     <th style={{ padding: "0.4rem 0.625rem", textAlign: "right", fontWeight: 700, color: "#7C3AED" }}>Lahir</th>
                     <th style={{ padding: "0.4rem 0.625rem", textAlign: "right", fontWeight: 700, color: "#7C3AED" }}>Mati</th>
+                    <th style={{ padding: "0.4rem 0.625rem", textAlign: "right", fontWeight: 700, color: "#7C3AED" }}>Penduduk</th>
                   </tr></thead>
                   <tbody>
                     {importPreview.map((r, i) => (
@@ -583,6 +585,7 @@ function ImportModalUI({ showImport, setShowImport, importRaw, setImportRaw, imp
                         <td style={{ padding: "0.3rem 0.625rem", textAlign: "right", fontFamily: "monospace", color: SUC }}>{r.jumlah_datang.toLocaleString()}</td>
                         <td style={{ padding: "0.3rem 0.625rem", textAlign: "right", fontFamily: "monospace", color: "#2563EB" }}>{r.jumlah_kelahiran.toLocaleString()}</td>
                         <td style={{ padding: "0.3rem 0.625rem", textAlign: "right", fontFamily: "monospace", color: WRN }}>{r.jumlah_kematian.toLocaleString()}</td>
+                        <td style={{ padding: "0.3rem 0.625rem", textAlign: "right", fontFamily: "monospace", color: T, fontWeight: 700 }}>{r.jumlah_penduduk.toLocaleString()}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -597,7 +600,7 @@ function ImportModalUI({ showImport, setShowImport, importRaw, setImportRaw, imp
 }
 
 function DataPendudukPage({ showForm, addToast, onNav }) {
-  const { pendudukData, periodeData, addPenduduk, updatePenduduk, deletePenduduk, importPenduduk, clearAllPenduduk } = useAppContext();
+  const { pendudukData, periodeData, addPendudukPrimer, updatePendudukPrimer, deletePendudukPrimer, importPendudukPrimer, clearAllPendudukPrimer } = useAppContext();
   const [search, setSearch] = useState("");
   const [filterCol, setFilterCol] = useState("tahun");
   const [page, setPage] = useState(1);
@@ -627,7 +630,7 @@ function DataPendudukPage({ showForm, addToast, onNav }) {
     const e = {};
     if (!form.id_priode) e.id_priode = "Pilih periode";
     if (!form.tahun || form.tahun < 1996) e.tahun = "Tahun tidak valid";
-    ["jumlah_pindah", "jumlah_datang", "jumlah_kelahiran", "jumlah_kematian"].forEach(f => {
+    ["jumlah_pindah", "jumlah_datang", "jumlah_kelahiran", "jumlah_kematian", "jumlah_penduduk"].forEach(f => {
       if (form[f] === "" || +form[f] < 0) e[f] = "Wajib diisi (≥ 0)";
     });
     return e;
@@ -636,19 +639,19 @@ function DataPendudukPage({ showForm, addToast, onNav }) {
   const handleSubmit = () => {
     const e = validate();
     if (Object.keys(e).length) { setFormErrors(e); return; }
-    const row = { ...form, jumlah_pindah: +form.jumlah_pindah, jumlah_datang: +form.jumlah_datang, jumlah_kelahiran: +form.jumlah_kelahiran, jumlah_kematian: +form.jumlah_kematian };
+    const row = { ...form, jumlah_pindah: +form.jumlah_pindah, jumlah_datang: +form.jumlah_datang, jumlah_kelahiran: +form.jumlah_kelahiran, jumlah_kematian: +form.jumlah_kematian, jumlah_penduduk: +form.jumlah_penduduk };
     if (editId) {
-      updatePenduduk(editId, row);
+      updatePendudukPrimer(editId, row);
       addToast("✅ Data diperbarui & tersinkron ke SIPENDUK User!", "success");
     } else {
-      addPenduduk(row);
+      addPendudukPrimer(row);
       addToast("✅ Data ditambahkan & tersinkron ke SIPENDUK User!", "success");
     }
     setEditId(null); setForm(emptyForm); setFormErrors({}); setShowFormInline(false);
   };
 
   const doDelete = () => {
-    deletePenduduk(deleteId);
+    deletePendudukPrimer(deleteId);
     setDeleteId(null);
     addToast("Data berhasil dihapus!", "success");
   };
@@ -692,6 +695,7 @@ function DataPendudukPage({ showForm, addToast, onNav }) {
             { label: "Jumlah Datang", val: (d.jumlah_datang || 0).toLocaleString(), c: SUC },
             { label: "Jumlah Kelahiran", val: (d.jumlah_kelahiran || 0).toLocaleString(), c: "#2563EB" },
             { label: "Jumlah Kematian", val: (d.jumlah_kematian || 0).toLocaleString(), c: WRN },
+            { label: "Jumlah Penduduk", val: (d.jumlah_penduduk || 0).toLocaleString(), c: T },
           ].map(item => (
             <div key={item.label} style={{ background: W, border: `1.5px solid ${BDR}`, borderRadius: 10, padding: "1rem 1.25rem", boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}>
               <div style={{ fontSize: "0.68rem", color: M, textTransform: "uppercase", fontWeight: 600, marginBottom: "0.375rem" }}>{item.label}</div>
@@ -715,7 +719,7 @@ function DataPendudukPage({ showForm, addToast, onNav }) {
         <p style={{ fontSize: "0.88rem", color: M, marginBottom: "1.5rem" }}>Kelola data kependudukan Kota Tegal — pilih menu di bawah:</p>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "1.25rem" }}>
           {[
-            { icon: "📋", title: "Data Primer", desc: "Kelola data migrasi (pindah, datang, lahir, mati)", btn: "Buka Data Primer", nav: "tambah-penduduk" },
+            { icon: "📋", title: "Data Primer", desc: "Kelola data migrasi & jumlah penduduk (pindah, datang, lahir, mati, penduduk)", btn: "Buka Data Primer", nav: "tambah-penduduk" },
             { icon: "📦", title: "Data Sekunder", desc: "Kelola data detail (gender, usia, kecamatan, sosial, TK, pendidikan)", btn: "Buka Data Sekunder", nav: "data-migrasi" },
             { icon: "🔮", title: "Prediksi KNN", desc: "Proyeksi penduduk dengan algoritma KNN", btn: "Lihat Prediksi", nav: "prediksi-knn" },
           ].map(card => (
@@ -741,7 +745,7 @@ function DataPendudukPage({ showForm, addToast, onNav }) {
           {!showFormInline && !editId && <button onClick={() => { setEditId(null); setForm(emptyForm); setFormErrors({}); setShowFormInline(true); }} style={{ background: `linear-gradient(135deg, ${P}, ${PL})`, border: "none", borderRadius: 8, color: W, fontWeight: 700, fontSize: "0.82rem", padding: "0.6rem 1.25rem", cursor: "pointer" }}>➕ Tambah Data</button>}
           {showFormInline && !editId && <button onClick={() => { setShowFormInline(false); setForm(emptyForm); setFormErrors({}); }} style={{ background: `${M}15`, border: `1px solid ${M}`, borderRadius: 8, color: M, fontWeight: 600, fontSize: "0.82rem", padding: "0.6rem 1.25rem", cursor: "pointer" }}>✕ Tutup Form</button>}
           <button onClick={() => {
-            const rows = pendudukData.map(d => ({ ID: d.id_penduduk, Periode: d.id_priode, Tahun: d.tahun, Pindah: d.jumlah_pindah, Datang: d.jumlah_datang, Kelahiran: d.jumlah_kelahiran, Kematian: d.jumlah_kematian }));
+            const rows = pendudukData.map(d => ({ ID: d.id_penduduk, Periode: d.id_priode, Tahun: d.tahun, Pindah: d.jumlah_pindah, Datang: d.jumlah_datang, Kelahiran: d.jumlah_kelahiran, Kematian: d.jumlah_kematian, Penduduk: d.jumlah_penduduk }));
             const header = Object.keys(rows[0] || {});
             const csv = [header.join(","), ...rows.map(r => header.map(h => r[h]).join(","))].join("\n");
             const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
@@ -769,6 +773,7 @@ function DataPendudukPage({ showForm, addToast, onNav }) {
             {inp("jumlah_datang", "Jumlah Datang")}
             {inp("jumlah_kelahiran", "Jumlah Kelahiran")}
             {inp("jumlah_kematian", "Jumlah Kematian")}
+            {inp("jumlah_penduduk", "Jumlah Penduduk")}
           </div>
         </div>
         <hr style={{ border: "none", borderTop: `1px solid ${BDR}`, margin: "1.25rem 0" }} />
@@ -791,13 +796,13 @@ function DataPendudukPage({ showForm, addToast, onNav }) {
         <div style={{ overflowX: "auto" }}>
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.8rem" }}>
             <thead><tr style={{ background: `linear-gradient(135deg, ${P}, ${PL})` }}>
-              {["Aksi", "No", "ID", "Tahun", "Pindah", "Datang", "Kelahiran", "Kematian"].map(h => (
+              {["Aksi", "No", "ID", "Tahun", "Pindah", "Datang", "Kelahiran", "Kematian", "Penduduk"].map(h => (
                 <th key={h} style={{ padding: "0.75rem 0.875rem", textAlign: "left", color: W, fontWeight: 700, fontSize: "0.67rem", textTransform: "uppercase", letterSpacing: "0.05em", whiteSpace: "nowrap" }}>{h}</th>
               ))}
             </tr></thead>
             <tbody>
               {pageData.length === 0 ? (
-                <tr><td colSpan={9} style={{ padding: "3rem", textAlign: "center", color: M }}>
+                <tr><td colSpan={10} style={{ padding: "3rem", textAlign: "center", color: M }}>
                   <div style={{ fontSize: "2rem", marginBottom: "0.5rem" }}>📭</div>
                   <div style={{ fontWeight: 700 }}>Tidak ada data</div>
                 </td></tr>
@@ -817,6 +822,7 @@ function DataPendudukPage({ showForm, addToast, onNav }) {
                   <td style={{ padding: "0.55rem 0.875rem", fontFamily: "monospace", fontWeight: 600, color: SUC }}>{(d.jumlah_datang || 0).toLocaleString()}</td>
                   <td style={{ padding: "0.55rem 0.875rem", fontFamily: "monospace", fontWeight: 600, color: "#2563EB" }}>{(d.jumlah_kelahiran || 0).toLocaleString()}</td>
                   <td style={{ padding: "0.55rem 0.875rem", fontFamily: "monospace", fontWeight: 600, color: WRN }}>{(d.jumlah_kematian || 0).toLocaleString()}</td>
+                  <td style={{ padding: "0.55rem 0.875rem", fontFamily: "monospace", fontWeight: 700, color: T }}>{(d.jumlah_penduduk || 0).toLocaleString()}</td>
                 </tr>
               ))}
             </tbody>
@@ -851,7 +857,7 @@ function DataPendudukPage({ showForm, addToast, onNav }) {
             </div>
             <div style={{ padding: "0 1.5rem 1.5rem", display: "flex", gap: "0.75rem", justifyContent: "flex-end" }}>
               <button onClick={() => setClearConfirm(false)} style={{ background: W, border: `1.5px solid ${BDR}`, borderRadius: 8, color: M, fontWeight: 600, fontSize: "0.85rem", padding: "0.6rem 1.25rem", cursor: "pointer" }}>Batal</button>
-              <button onClick={() => { clearAllPenduduk(); setClearConfirm(false); addToast("✅ Semua data penduduk berhasil dihapus!", "success"); }} style={{ background: `linear-gradient(135deg, ${DNG}, #B91C1C)`, border: "none", borderRadius: 8, color: W, fontWeight: 700, fontSize: "0.85rem", padding: "0.6rem 1.25rem", cursor: "pointer" }}>🗑️ Ya, Hapus Semua</button>
+              <button onClick={() => { clearAllPendudukPrimer(); setClearConfirm(false); addToast("✅ Semua data primer berhasil dihapus!", "success"); }} style={{ background: `linear-gradient(135deg, ${DNG}, #B91C1C)`, border: "none", borderRadius: 8, color: W, fontWeight: 700, fontSize: "0.85rem", padding: "0.6rem 1.25rem", cursor: "pointer" }}>🗑️ Ya, Hapus Semua</button>
             </div>
           </div>
         </div>
@@ -867,7 +873,7 @@ function DataPendudukPage({ showForm, addToast, onNav }) {
           importPreview={importPreview}
           setImportPreview={setImportPreview}
           addToast={addToast}
-          importPenduduk={importPenduduk}
+          importPendudukPrimer={importPendudukPrimer}
           BDR={BDR} W={W} BG={BG} DNG={DNG} SUC={SUC} WRN={WRN} M={M} T={T} P={P}
         />
       )}
@@ -1055,7 +1061,7 @@ function PrediksiPage() {
   const generateRekomendasi = useCallback(async () => {
     if (!predicted || !metrics) return;
     setRekomLoading(true); setRekomError("");
-    const apiKey = import.meta.env.VITE_ZEN_API_KEY || "sk-zAsyEJeJ1l8RHm4AM5skeiAuJm4PDJ7X6cETRrQ0sRHD1woWWcxCIIwlnAyn9i0b";
+    const apiKey = import.meta.env.VITE_ZEN_API_KEY;
     if (!apiKey) { setRekomError("API key belum diset. Tambahkan VITE_ZEN_API_KEY di file .env"); setRekomLoading(false); return; }
     const lastHistVal = prediksiAkhir.lastHistNilai;
     const lastPredVal = prediksiAkhir.lastPredNilai;
@@ -1629,11 +1635,25 @@ function PeriodePage({ addToast }) {
 // ══════════════════════════════════════════════════════════════
 function AdminPage({ addToast, currentUser }) {
   const { adminUsers, addAdminUser, updateAdminUser, deleteAdminUser } = useAppContext();
-  const [form, setForm] = useState({ username: "", nama: "", password: "", level: "admin", status: 1 });
+  const EMPTY_FORM = { username: "", nama: "", password: "", level: "admin", status: 1, nip: "", tempat_lahir: "", tanggal_lahir: "", pangkat: "", status_kepegawaian: "" };
+  const [form, setForm] = useState(EMPTY_FORM);
   const [editId, setEditId] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [deleteId, setDeleteId] = useState(null);
   const [showPw, setShowPw] = useState(false);
+  const dateInputRef = useRef(null);
+
+  const BULAN_NAMES = ["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
+  const JABATAN_LIST = [
+    "Kepala Dinas",
+    "Sekretaris Dinas",
+    "Bagian Perencanaan dan Keuangan",
+    "Bagian Umum dan Kepegawaian",
+    "Bidang Pelayanan Pendaftaran Penduduk",
+    "Bidang PIAK dan Pemanfaatan Data",
+    "Bidang Pelayanan Pencatatan Sipil",
+    "Analisis Kebijakan Muda",
+  ];
 
   const pwStrength = (pw) => {
     if (!pw) return { score: 0, label: "", color: M };
@@ -1646,17 +1666,75 @@ function AdminPage({ addToast, currentUser }) {
   };
   const pw = pwStrength(form.password);
 
+  const inputStyle = { width: "100%", padding: "0.65rem 0.875rem", border: `1.5px solid ${BDR}`, borderRadius: 8, fontSize: "0.85rem", color: T, outline: "none", boxSizing: "border-box", background: W };
+  const selectStyle = { width: "100%", padding: "0.65rem 0.875rem", border: `1.5px solid ${BDR}`, borderRadius: 8, fontSize: "0.85rem", color: T, outline: "none", cursor: "pointer", background: W };
+  const labelStyle = { display: "block", fontSize: "0.72rem", fontWeight: 700, color: P, textTransform: "uppercase", marginBottom: "0.375rem" };
+  const subLabelStyle = { display: "block", fontSize: "0.65rem", fontWeight: 600, color: M, marginBottom: "0.3rem", textTransform: "uppercase" };
+
+  // ── jQuery UI Datepicker init ─────────────────────────────────
+  useEffect(() => {
+    if (!showForm || !dateInputRef.current) return;
+    const $ = window.$;
+    if (!$ || !$.fn?.datepicker) return;
+    const $el = $(dateInputRef.current);
+    // destroy dulu jika sudah ada
+    if ($el.hasClass("hasDatepicker")) $el.datepicker("destroy");
+    $el.datepicker({
+      dateFormat: "dd MM yy",
+      changeMonth: true,
+      changeYear: true,
+      yearRange: "1950:+0",
+      showOtherMonths: true,
+      selectOtherMonths: true,
+      showButtonPanel: true,
+      currentText: "Hari Ini",
+      closeText: "Tutup",
+      monthNames: ["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"],
+      monthNamesShort: ["Jan","Feb","Mar","Apr","Mei","Jun","Jul","Ags","Sep","Okt","Nov","Des"],
+      dayNames: ["Minggu","Senin","Selasa","Rabu","Kamis","Jumat","Sabtu"],
+      dayNamesShort: ["Min","Sen","Sel","Rab","Kam","Jum","Sab"],
+      dayNamesMin: ["Mi","Sn","Sl","Rb","Km","Jm","Sb"],
+      onSelect: (dateString) => {
+        setForm(p => ({ ...p, tanggal_lahir: dateString }));
+      },
+    });
+    // Set nilai jika edit
+    if (form.tanggal_lahir) $el.datepicker("setDate", form.tanggal_lahir);
+    return () => {
+      if ($el.hasClass("hasDatepicker")) $el.datepicker("destroy");
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showForm]);
+
   const handleSubmit = () => {
     if (!form.username.trim() || form.username.length < 5) { addToast("Username minimal 5 karakter!", "error"); return; }
     if (!form.nama.trim()) { addToast("Nama lengkap wajib diisi!", "error"); return; }
     if (!editId && !form.password) { addToast("Password wajib diisi!", "error"); return; }
-    if (editId) { updateAdminUser(editId, { username: form.username, nama: form.nama, level: form.level, status: form.status }); addToast("Admin diperbarui!", "success"); }
+    if (!form.nip.trim()) { addToast("NIP wajib diisi!", "error"); return; }
+    if (!form.tempat_lahir.trim()) { addToast("Tempat lahir wajib diisi!", "error"); return; }
+    if (!form.tanggal_lahir?.trim()) { addToast("Tanggal lahir wajib diisi!", "error"); return; }
+    if (!form.pangkat) { addToast("Pangkat/Jabatan wajib dipilih!", "error"); return; }
+    if (!form.status_kepegawaian) { addToast("Status kepegawaian wajib dipilih!", "error"); return; }
+    const payload = { username: form.username, nama: form.nama, level: form.level, status: form.status, nip: form.nip, tempat_lahir: form.tempat_lahir, tanggal_lahir: form.tanggal_lahir, pangkat: form.pangkat, status_kepegawaian: form.status_kepegawaian };
+    // Sertakan password jika ada (saat tambah wajib, saat edit opsional)
+    if (form.password) payload.password = form.password;
+    if (editId) { updateAdminUser(editId, payload); addToast("Admin diperbarui!", "success"); }
     else {
       if (adminUsers.some(a => a.username === form.username)) { addToast("Username sudah digunakan!", "error"); return; }
-      addAdminUser({ username: form.username, nama: form.nama, level: form.level, status: form.status });
+      addAdminUser(payload);
       addToast("Admin ditambahkan!", "success");
     }
-    setForm({ username: "", nama: "", password: "", level: "admin", status: 1 }); setEditId(null); setShowForm(false);
+    setForm(EMPTY_FORM); setEditId(null); setShowForm(false);
+  };
+
+  // tanggal_lahir sekarang string langsung dari datepicker, misal "08 Februari 1985"
+  const formatTgl = (tgl) => {
+    if (!tgl || typeof tgl !== "string" || !tgl.trim()) return null;
+    // handle legacy object format {tanggal, bulan, tahun}
+    if (typeof tgl === "object" && tgl.tanggal) {
+      return `${tgl.tanggal} ${BULAN_NAMES[parseInt(tgl.bulan, 10) - 1]} ${tgl.tahun}`;
+    }
+    return tgl;
   };
 
   return (
@@ -1664,26 +1742,44 @@ function AdminPage({ addToast, currentUser }) {
       <ConfirmModal show={!!deleteId} onConfirm={() => { deleteAdminUser(deleteId); setDeleteId(null); addToast("Admin dihapus!", "success"); }} onCancel={() => setDeleteId(null)} />
       <div style={{ marginBottom: "1.5rem", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <h1 style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: "1.4rem", fontWeight: 800, color: T }}>👤 Manajemen Akun Admin</h1>
-        <button onClick={() => { setShowForm(!showForm); setEditId(null); setForm({ username: "", nama: "", password: "", level: "admin", status: 1 }); }}
+        <button onClick={() => { setShowForm(!showForm); setEditId(null); setForm(EMPTY_FORM); }}
           style={{ background: `linear-gradient(135deg, ${P}, ${PL})`, border: "none", borderRadius: 8, color: W, fontWeight: 700, fontSize: "0.82rem", padding: "0.6rem 1.25rem", cursor: "pointer" }}>
           {showForm ? "✖ Tutup" : "➕ Tambah Admin"}
         </button>
       </div>
+
       {showForm && (
         <div style={{ background: W, border: `1.5px solid ${BDR}`, borderRadius: 12, padding: "1.5rem", marginBottom: "1.25rem", boxShadow: "0 2px 10px rgba(0,0,0,0.05)" }}>
+
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
-            {[{ k: "username", l: "Username (min. 5 karakter)", ph: "cth: budi_admin" }, { k: "nama", l: "Nama Lengkap", ph: "cth: Budi Santoso" }].map(f => (
-              <div key={f.k}>
-                <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: P, textTransform: "uppercase", marginBottom: "0.375rem" }}>{f.l} <span style={{ color: DNG }}>*</span></label>
-                <input value={form[f.k]} onChange={e => setForm(p => ({ ...p, [f.k]: e.target.value }))} placeholder={f.ph}
-                  style={{ width: "100%", padding: "0.65rem 0.875rem", border: `1.5px solid ${BDR}`, borderRadius: 8, fontSize: "0.85rem", color: T, outline: "none", boxSizing: "border-box" }} />
-              </div>
-            ))}
             <div>
-              <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: P, textTransform: "uppercase", marginBottom: "0.375rem" }}>Password {!editId && <span style={{ color: DNG }}>*</span>}</label>
+              <label style={labelStyle}>Username (min. 5 karakter) <span style={{ color: DNG }}>*</span></label>
+              <input value={form.username} onChange={e => setForm(p => ({ ...p, username: e.target.value }))} placeholder="cth: budi_admin" style={inputStyle} />
+            </div>
+            <div>
+              <label style={labelStyle}>NIP <span style={{ color: DNG }}>*</span></label>
+              <input
+                value={form.nip}
+                onChange={e => { const v = e.target.value.replace(/\D/g, "").slice(0, 18); setForm(p => ({ ...p, nip: v })); }}
+                placeholder="cth: 198501012010011001"
+                maxLength={18}
+                inputMode="numeric"
+                style={{ ...inputStyle, fontFamily: "monospace", letterSpacing: "0.04em" }}
+              />
+              <div style={{ fontSize: "0.62rem", color: M, marginTop: "0.2rem" }}>{form.nip.length}/18 karakter</div>
+            </div>
+          </div>
+
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem", marginTop: "1rem" }}>
+            <div>
+              <label style={labelStyle}>Nama Lengkap <span style={{ color: DNG }}>*</span></label>
+              <input value={form.nama} onChange={e => setForm(p => ({ ...p, nama: e.target.value }))} placeholder="cth: Budi Santoso" style={inputStyle} />
+            </div>
+            <div>
+              <label style={labelStyle}>Password {!editId && <span style={{ color: DNG }}>*</span>}</label>
               <div style={{ position: "relative" }}>
                 <input type={showPw ? "text" : "password"} value={form.password} onChange={e => setForm(p => ({ ...p, password: e.target.value }))} placeholder={editId ? "Kosongkan jika tidak diubah" : "Min. 6 karakter"}
-                  style={{ width: "100%", padding: "0.65rem 2.5rem 0.65rem 0.875rem", border: `1.5px solid ${BDR}`, borderRadius: 8, fontSize: "0.85rem", color: T, outline: "none", boxSizing: "border-box" }} />
+                  style={{ ...inputStyle, paddingRight: "2.5rem" }} />
                 <button onClick={() => setShowPw(!showPw)} style={{ position: "absolute", right: "0.75rem", top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", fontSize: "1rem" }}>{showPw ? "🙈" : "👁"}</button>
               </div>
               {form.password && (
@@ -1695,36 +1791,122 @@ function AdminPage({ addToast, currentUser }) {
                 </div>
               )}
             </div>
+          </div>
+
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem", marginTop: "1rem" }}>
             <div>
-              <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: P, textTransform: "uppercase", marginBottom: "0.375rem" }}>Level Akses</label>
-              <select value={form.level} onChange={e => setForm(p => ({ ...p, level: e.target.value }))}
-                style={{ width: "100%", padding: "0.65rem 0.875rem", border: `1.5px solid ${BDR}`, borderRadius: 8, fontSize: "0.85rem", color: T, outline: "none", cursor: "pointer" }}>
+              <label style={labelStyle}>Level Akses</label>
+              <select value={form.level} onChange={e => setForm(p => ({ ...p, level: e.target.value }))} style={selectStyle}>
                 <option value="superadmin">Super Admin</option>
                 <option value="admin">Admin</option>
               </select>
             </div>
+            <div>
+              <label style={labelStyle}>Pangkat / Jabatan <span style={{ color: DNG }}>*</span></label>
+              <select value={form.pangkat} onChange={e => setForm(p => ({ ...p, pangkat: e.target.value }))} style={{ ...selectStyle, color: form.pangkat ? T : M }}>
+                <option value="" disabled>-- Pilih Jabatan --</option>
+                {JABATAN_LIST.map(j => <option key={j} value={j}>{j}</option>)}
+              </select>
+            </div>
           </div>
-          <div style={{ marginTop: "0.875rem" }}>
-            <label style={{ fontSize: "0.82rem", fontWeight: 600, color: T, display: "flex", alignItems: "center", gap: "0.5rem", cursor: "pointer" }}>
-              <input type="checkbox" checked={form.status === 1} onChange={e => setForm(p => ({ ...p, status: e.target.checked ? 1 : 0 }))} style={{ cursor: "pointer" }} /> Status Aktif
-            </label>
+
+          <div style={{ height: "1px", background: BDR, margin: "1.25rem 0" }} />
+
+          <div>
+            <label style={labelStyle}>Tempat &amp; Tanggal Lahir <span style={{ color: DNG }}>*</span></label>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem", alignItems: "flex-start" }}>
+              {/* Tempat Lahir */}
+              <div>
+                <label style={subLabelStyle}>Tempat Lahir</label>
+                <input
+                  value={form.tempat_lahir}
+                  onChange={e => setForm(p => ({ ...p, tempat_lahir: e.target.value }))}
+                  placeholder="cth: Tegal"
+                  style={inputStyle}
+                />
+              </div>
+              {/* Tanggal Lahir — jQuery UI Datepicker */}
+              <div>
+                <label style={subLabelStyle}>Tanggal Lahir</label>
+                <div style={{ position: "relative" }}>
+                  <input
+                    ref={dateInputRef}
+                    id="sipenduk-datepicker"
+                    readOnly
+                    placeholder="Klik untuk pilih tanggal..."
+                    defaultValue={form.tanggal_lahir || ""}
+                    style={{
+                      ...inputStyle,
+                      cursor: "pointer",
+                      paddingRight: "2.5rem",
+                      color: form.tanggal_lahir ? T : M,
+                    }}
+                  />
+                  <span style={{
+                    position: "absolute", right: "0.875rem", top: "50%", transform: "translateY(-50%)",
+                    fontSize: "1rem", pointerEvents: "none",
+                  }}>📅</span>
+                </div>
+                {form.tanggal_lahir && (
+                  <div style={{ fontSize: "0.62rem", color: P, marginTop: "0.2rem", fontWeight: 600 }}>📌 {form.tanggal_lahir}</div>
+                )}
+              </div>
+            </div>
           </div>
+
+          <div style={{ marginTop: "1rem" }}>
+            <label style={labelStyle}>Status Kepegawaian <span style={{ color: DNG }}>*</span></label>
+            <div style={{ display: "flex", gap: "1.5rem", flexWrap: "wrap", alignItems: "center", padding: "0.875rem 1rem", background: BG, borderRadius: 8, border: `1.5px solid ${BDR}` }}>
+              {[
+                { val: "PNS",            icon: "🏛️", color: P },
+                { val: "PPPK",           icon: "📋", color: NA },
+                { val: "Honorer / Non ASN", icon: "👤", color: WRN },
+              ].map(opt => (
+                <label key={opt.val} style={{ display: "flex", alignItems: "center", gap: "0.5rem", cursor: "pointer" }}>
+                  <input
+                    type="radio"
+                    name="status_kepegawaian_radio"
+                    value={opt.val}
+                    checked={form.status_kepegawaian === opt.val}
+                    onChange={() => setForm(p => ({ ...p, status_kepegawaian: opt.val }))}
+                    style={{ accentColor: opt.color, width: "1.05rem", height: "1.05rem", cursor: "pointer" }}
+                  />
+                  <span style={{ fontSize: "0.84rem", fontWeight: 700, color: opt.color }}>
+                    {opt.icon} {opt.val}
+                  </span>
+                </label>
+              ))}
+            </div>
+          </div>
+
           <div style={{ display: "flex", gap: "0.75rem", marginTop: "1.25rem" }}>
             <button onClick={handleSubmit} style={{ background: `linear-gradient(135deg, ${P}, ${PL})`, border: "none", borderRadius: 8, color: W, fontWeight: 700, fontSize: "0.85rem", padding: "0.65rem 1.5rem", cursor: "pointer" }}>💾 Simpan</button>
             <button onClick={() => { setShowForm(false); setEditId(null); }} style={{ background: W, border: `1.5px solid ${BDR}`, borderRadius: 8, color: M, fontWeight: 600, fontSize: "0.85rem", padding: "0.65rem 1.25rem", cursor: "pointer" }}>↩ Batal</button>
           </div>
         </div>
       )}
-      <div style={{ background: W, border: `1.5px solid ${BDR}`, borderRadius: 12, boxShadow: "0 2px 10px rgba(0,0,0,0.05)", overflow: "hidden" }}>
-        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.82rem" }}>
+      <div style={{ background: W, border: `1.5px solid ${BDR}`, borderRadius: 12, boxShadow: "0 2px 10px rgba(0,0,0,0.05)", overflowX: "auto" }}>
+        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.82rem", minWidth: "1200px" }}>
           <thead><tr style={{ background: `linear-gradient(135deg, ${P}, ${PL})` }}>
-            {["Aksi", "No", "Username", "Nama Lengkap", "Level", "Status"].map(h => <th key={h} style={{ padding: "0.75rem 1rem", textAlign: "left", color: W, fontWeight: 700, fontSize: "0.67rem", textTransform: "uppercase" }}>{h}</th>)}
+            {["Aksi", "No", "Username", "Nama Lengkap", "NIP", "Tempat Lahir", "Tanggal Lahir", "Pangkat / Jabatan", "Level", "Status Kepegawaian"].map(h => (
+              <th key={h} style={{ padding: "0.75rem 1rem", textAlign: "left", color: W, fontWeight: 700, fontSize: "0.67rem", textTransform: "uppercase", whiteSpace: "nowrap" }}>{h}</th>
+            ))}
           </tr></thead>
           <tbody>{adminUsers.map((a, i) => (
             <tr key={a.id_admin} style={{ background: i % 2 === 0 ? W : BG }}>
-              <td style={{ padding: "0.6rem 1rem" }}>
-                <button onClick={() => { setEditId(a.id_admin); setForm({ username: a.username, nama: a.nama, password: "", level: a.level, status: a.status }); setShowForm(true); }}
-                  style={{ background: `${WRN}15`, border: `1px solid ${WRN}40`, borderRadius: 5, color: WRN, fontWeight: 600, fontSize: "0.7rem", padding: "0.25rem 0.5rem", cursor: "pointer", marginRight: 4 }}>✏️</button>
+              <td style={{ padding: "0.6rem 1rem", whiteSpace: "nowrap" }}>
+                <button onClick={() => {
+                  setEditId(a.id_admin);
+                  setForm({
+                    username: a.username, nama: a.nama, password: "", level: a.level, status: a.status,
+                    nip: a.nip || "", tempat_lahir: a.tempat_lahir || "",
+                    tanggal_lahir: typeof a.tanggal_lahir === "object" && a.tanggal_lahir?.tanggal
+                      ? `${a.tanggal_lahir.tanggal} ${BULAN_NAMES[parseInt(a.tanggal_lahir.bulan, 10) - 1]} ${a.tanggal_lahir.tahun}`
+                      : (a.tanggal_lahir || ""),
+                    pangkat: a.pangkat || "", status_kepegawaian: a.status_kepegawaian || "",
+                  });
+                  setShowForm(true);
+                }} style={{ background: `${WRN}15`, border: `1px solid ${WRN}40`, borderRadius: 5, color: WRN, fontWeight: 600, fontSize: "0.7rem", padding: "0.25rem 0.5rem", cursor: "pointer", marginRight: 4 }}>✏️</button>
                 {a.username !== currentUser?.username && (
                   <button onClick={() => setDeleteId(a.id_admin)} style={{ background: `${DNG}15`, border: `1px solid ${DNG}40`, borderRadius: 5, color: DNG, fontWeight: 600, fontSize: "0.7rem", padding: "0.25rem 0.5rem", cursor: "pointer" }}>🗑️</button>
                 )}
@@ -1732,11 +1914,32 @@ function AdminPage({ addToast, currentUser }) {
               <td style={{ padding: "0.6rem 1rem", color: M }}>{i + 1}</td>
               <td style={{ padding: "0.6rem 1rem", fontFamily: "monospace", color: P, fontWeight: 700 }}>@{a.username}</td>
               <td style={{ padding: "0.6rem 1rem", color: T, fontWeight: 600 }}>{a.nama}</td>
-              <td style={{ padding: "0.6rem 1rem" }}>
-                <span style={{ background: a.level === "superadmin" ? `${P}15` : `${NA}15`, border: `1px solid ${a.level === "superadmin" ? P : NA}40`, color: a.level === "superadmin" ? P : NA, borderRadius: 20, padding: "0.2rem 0.625rem", fontSize: "0.68rem", fontWeight: 700 }}>{a.level === "superadmin" ? "Super Admin" : "Admin"}</span>
+              <td style={{ padding: "0.6rem 1rem", fontFamily: "monospace", color: M, fontSize: "0.78rem" }}>{a.nip || <span style={{ color: BDR }}>—</span>}</td>
+              <td style={{ padding: "0.6rem 1rem", color: T }}>{a.tempat_lahir || <span style={{ color: BDR }}>—</span>}</td>
+              <td style={{ padding: "0.6rem 1rem", color: T, whiteSpace: "nowrap", minWidth: "140px" }}>
+                {formatTgl(a.tanggal_lahir) || <span style={{ color: BDR }}>—</span>}
               </td>
               <td style={{ padding: "0.6rem 1rem" }}>
-                <span style={{ background: a.status ? `${SUC}15` : `${DNG}15`, border: `1px solid ${a.status ? SUC : DNG}40`, color: a.status ? SUC : DNG, borderRadius: 20, padding: "0.2rem 0.625rem", fontSize: "0.68rem", fontWeight: 700 }}>{a.status ? "✅ Aktif" : "❌ Nonaktif"}</span>
+                {a.pangkat
+                  ? <span style={{ background: `${P}10`, border: `1px solid ${P}30`, color: P, borderRadius: 20, padding: "0.2rem 0.625rem", fontSize: "0.68rem", fontWeight: 700, whiteSpace: "nowrap" }}>{a.pangkat}</span>
+                  : <span style={{ color: BDR }}>—</span>}
+              </td>
+              <td style={{ padding: "0.6rem 1rem" }}>
+                <span style={{ background: a.level === "superadmin" ? `${P}15` : `${NA}15`, border: `1px solid ${a.level === "superadmin" ? P : NA}40`, color: a.level === "superadmin" ? P : NA, borderRadius: 20, padding: "0.2rem 0.625rem", fontSize: "0.68rem", fontWeight: 700 }}>
+                  {a.level === "superadmin" ? "Super Admin" : "Admin"}
+                </span>
+              </td>
+              <td style={{ padding: "0.6rem 1rem" }}>
+                {a.status_kepegawaian ? (
+                  <span style={{
+                    background: a.status_kepegawaian === "PNS" ? `${P}15` : a.status_kepegawaian === "PPPK" ? `${NA}15` : `${WRN}15`,
+                    border: `1px solid ${a.status_kepegawaian === "PNS" ? P : a.status_kepegawaian === "PPPK" ? NA : WRN}40`,
+                    color: a.status_kepegawaian === "PNS" ? P : a.status_kepegawaian === "PPPK" ? NA : WRN,
+                    borderRadius: 20, padding: "0.2rem 0.625rem", fontSize: "0.68rem", fontWeight: 700, whiteSpace: "nowrap"
+                  }}>
+                    {a.status_kepegawaian === "PNS" ? "🏛️ PNS" : a.status_kepegawaian === "PPPK" ? "📋 PPPK" : "👤 Honorer / Non ASN"}
+                  </span>
+                ) : <span style={{ color: BDR }}>—</span>}
               </td>
             </tr>
           ))}</tbody>
@@ -1853,7 +2056,7 @@ function ProfilePage({ user, addToast }) {
 //  DATA SEKUNDER PAGE — 21 Field Detail (Gender, Usia, Kecamatan, Sosial, TK, Pendidikan)
 // ══════════════════════════════════════════════════════════════
 function MigrasiPage({ addToast }) {
-  const { pendudukData, periodeData, addPenduduk, updatePenduduk, deletePenduduk } = useAppContext();
+  const { pendudukData, periodeData, addPendudukSekunder, updatePendudukSekunder, deletePendudukSekunder } = useAppContext();
   const INIT = { id_priode: "", tahun: "" };
   NEW_FIELDS.forEach(f => { INIT[f.k] = ""; });
   const [form, setForm] = useState(INIT);
@@ -1883,8 +2086,8 @@ function MigrasiPage({ addToast }) {
     if (Object.keys(e).length) { setErrors(e); return; }
     const row = { id_priode: +form.id_priode, tahun: +form.tahun };
     NEW_FIELDS.forEach(f => { row[f.k] = form[f.k] === "" ? 0 : +form[f.k]; });
-    if (editId) { updatePenduduk(editId, row); addToast("✅ Data sekunder diperbarui!", "success"); }
-    else { addPenduduk(row); addToast("✅ Data sekunder ditambahkan!", "success"); }
+    if (editId) { updatePendudukSekunder(editId, row); addToast("✅ Data sekunder diperbarui!", "success"); }
+    else { addPendudukSekunder(row); addToast("✅ Data sekunder ditambahkan!", "success"); }
     setForm(INIT); setEditId(null); setShowFormInline(false);
   };
 
@@ -1924,7 +2127,7 @@ function MigrasiPage({ addToast }) {
 
   return (
     <div>
-      <ConfirmModal show={deleteId !== null} onConfirm={() => { deletePenduduk(deleteId); setDeleteId(null); addToast("Data sekunder dihapus!", "success"); }} onCancel={() => setDeleteId(null)} />
+      <ConfirmModal show={deleteId !== null} onConfirm={() => { deletePendudukSekunder(deleteId); setDeleteId(null); addToast("Data sekunder dihapus!", "success"); }} onCancel={() => setDeleteId(null)} />
       <h1 style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: "1.4rem", fontWeight: 800, color: T, marginBottom: "1.25rem" }}>📊 Data Sekunder — Detail Penduduk</h1>
       <div style={{ background: "#F0FDF4", border: "1.5px solid #22C55E", borderRadius: 8, padding: "0.625rem 1rem", marginBottom: "1.25rem", fontSize: "0.78rem", color: "#166534", fontWeight: 600, display: "flex", alignItems: "center", gap: "0.5rem" }}>
         ℹ️ Data sekunder (gender, usia, kecamatan, sosial, tenaga kerja, pendidikan) dipisah dari data primer migrasi.
@@ -2071,7 +2274,7 @@ function MigrasiPage({ addToast }) {
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem" }}>
                   <div style={{ fontSize: "0.78rem", fontWeight: 700, color: T }}>📋 Preview ({importPreview.length} baris)</div>
                   <button onClick={() => {
-                    importPreview.forEach(r => addPenduduk(r));
+                    importPreview.forEach(r => addPendudukSekunder(r));
                     addToast(`✅ ${importPreview.length} data sekunder berhasil diimport & tersinkron!`, "success");
                     setShowImport(false); setImportRaw(""); setImportPreview([]);
                   }} style={{ background: `linear-gradient(135deg, ${P}, ${PL})`, border: "none", borderRadius: 6, color: W, fontWeight: 700, fontSize: "0.75rem", padding: "0.4rem 1rem", cursor: "pointer" }}>💾 Import {importPreview.length} Data</button>
