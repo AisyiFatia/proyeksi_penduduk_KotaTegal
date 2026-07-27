@@ -2181,24 +2181,37 @@ function MigrasiPage({ addToast }) {
               <div style={{ fontSize: "0.78rem", color: M, marginTop: "0.25rem" }}>Gunakan form di samping untuk menambah data</div>
             </div>
           ) : (
-            <div style={{ background: W, border: `1.5px solid ${BDR}`, borderRadius: 12, boxShadow: "0 2px 10px rgba(0,0,0,0.05)", overflow: "hidden" }}>
-              <div style={{ overflowX: "auto" }}>
-                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.72rem" }}>
-                  <thead><tr style={{ background: `linear-gradient(135deg, ${P}, ${PL})` }}>
-                    {["Aksi", "Tahun", ...NEW_FIELDS.map(f => f.l.replace("Jumlah Penduduk ", "").replace("Penduduk ", "").replace("Jumlah ", ""))].map(h => <th key={h} style={{ padding: "0.5rem 0.6rem", textAlign: "left", color: W, fontWeight: 700, fontSize: "0.6rem", textTransform: "uppercase" }}>{h}</th>)}
-                  </tr></thead>
-                  <tbody>{sekunderData.map((d, i) => (
-                    <tr key={d.id_penduduk} style={{ background: i % 2 === 0 ? W : BG }}>
-                      <td style={{ padding: "0.35rem 0.6rem", whiteSpace: "nowrap" }}>
-                        <button onClick={() => { setEditId(d.id_penduduk); const f = { id_priode: d.id_priode, tahun: d.tahun }; NEW_FIELDS.forEach(fi => { f[fi.k] = d[fi.k] ?? ""; }); setForm(f); setShowFormInline(true); }} style={{ background: `${WRN}15`, border: `1px solid ${WRN}40`, borderRadius: 4, color: WRN, fontSize: "0.6rem", padding: "0.2rem 0.35rem", cursor: "pointer" }}>✏️</button>
-                        <button onClick={() => setDeleteId(d.id_penduduk)} style={{ background: `${DNG}15`, border: `1px solid ${DNG}40`, borderRadius: 4, color: DNG, fontSize: "0.6rem", padding: "0.2rem 0.35rem", cursor: "pointer", marginLeft: 2 }}>🗑️</button>
-                      </td>
-                      <td style={{ padding: "0.35rem 0.6rem", fontWeight: 700, color: T }}>{d.tahun}</td>
-                      {NEW_FIELDS.map(f => <td key={f.k} style={{ padding: "0.35rem 0.6rem", fontFamily: "monospace", color: M }}>{(d[f.k] ?? 0).toLocaleString()}</td>)}
-                    </tr>
-                  ))}</tbody>
-                </table>
-              </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+              {sekunderData.map((d, i) => (
+                <div key={d.id_penduduk} style={{ background: W, border: `1.5px solid ${BDR}`, borderRadius: 12, boxShadow: "0 2px 10px rgba(0,0,0,0.05)", overflow: "hidden" }}>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0.875rem 1.25rem", background: `linear-gradient(135deg, ${P}08, ${PL}08)`, borderBottom: `1px solid ${BDR}` }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+                      <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: "1rem", fontWeight: 800, color: T }}>📅 {d.tahun}</span>
+                      <span style={{ fontSize: "0.7rem", color: M, background: BG, padding: "0.2rem 0.5rem", borderRadius: 4 }}>#{d.id_penduduk}</span>
+                    </div>
+                    <div style={{ display: "flex", gap: "0.375rem" }}>
+                      <button onClick={() => { setEditId(d.id_penduduk); const f = { id_priode: d.id_priode, tahun: d.tahun }; NEW_FIELDS.forEach(fi => { f[fi.k] = d[fi.k] ?? ""; }); setForm(f); setShowFormInline(true); }} style={{ background: `${WRN}15`, border: `1px solid ${WRN}40`, borderRadius: 6, color: WRN, fontWeight: 600, fontSize: "0.7rem", padding: "0.3rem 0.6rem", cursor: "pointer" }}>✏️ Edit</button>
+                      <button onClick={() => setDeleteId(d.id_penduduk)} style={{ background: `${DNG}15`, border: `1px solid ${DNG}40`, borderRadius: 6, color: DNG, fontWeight: 600, fontSize: "0.7rem", padding: "0.3rem 0.6rem", cursor: "pointer" }}>🗑️ Hapus</button>
+                    </div>
+                  </div>
+                  <div style={{ padding: "1rem 1.25rem", display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: "0.625rem" }}>
+                    {GROUPS.map(group => (
+                      <div key={group.g} style={{ background: BG, borderRadius: 8, padding: "0.75rem" }}>
+                        <div style={{ fontSize: "0.62rem", fontWeight: 700, color: P, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "0.5rem" }}>{group.title}</div>
+                        {NEW_FIELDS.filter(f => f.g === group.g).map(f => {
+                          const val = d[f.k] ?? 0;
+                          return (
+                            <div key={f.k} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0.2rem 0", borderBottom: `1px solid ${BDR}40`, fontSize: "0.72rem" }}>
+                              <span style={{ color: M }}>{f.l.replace("Jumlah Penduduk ", "").replace("Penduduk ", "").replace("Jumlah ", "")}</span>
+                              <span style={{ fontFamily: "monospace", fontWeight: 700, color: T }}>{val.toLocaleString()}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
             </div>
           )}
         </div>
