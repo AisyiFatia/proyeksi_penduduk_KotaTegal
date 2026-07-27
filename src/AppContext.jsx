@@ -194,8 +194,9 @@ export function AppProvider({ children }) {
       ]);
       if (pen && pen.length > 0) {
         setPendudukData(prev => {
+          const backendTahun = new Set(pen.map(d => d.tahun));
           const sekunderToPush = prev.filter(d =>
-            SEKUNDER_FIELDS.some(k => (d[k] || 0) > 0)
+            !backendTahun.has(d.tahun) && SEKUNDER_FIELDS.some(k => (d[k] || 0) > 0)
           );
           if (sekunderToPush.length > 0) {
             api.bulkAddPendudukSekunder(sekunderToPush);
