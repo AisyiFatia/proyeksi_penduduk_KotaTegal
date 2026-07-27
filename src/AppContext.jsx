@@ -193,7 +193,16 @@ export function AppProvider({ children }) {
         api.getAdmin(),
       ]);
       if (pen && pen.length > 0) {
-        setPendudukData(pen);
+        setPendudukData(prev => {
+          const sekunderToPush = prev.filter(d =>
+            SEKUNDER_FIELDS.some(k => (d[k] || 0) > 0)
+          );
+          if (sekunderToPush.length > 0) {
+            api.bulkAddPendudukSekunder(sekunderToPush);
+            return [...pen, ...sekunderToPush];
+          }
+          return pen;
+        });
       }
       if (per && per.length > 0) setPeriodeData(per);
       if (adm && adm.length > 0) {
