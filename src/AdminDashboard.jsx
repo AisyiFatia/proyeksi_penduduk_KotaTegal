@@ -906,6 +906,10 @@ function PrediksiPage() {
     { id: "proyeksi_kecamatan_tt", label: "Proyeksi Tegal Timur", satuan: "jiwa", src: "penduduk" },
     { id: "proyeksi_kecamatan_tb", label: "Proyeksi Tegal Barat", satuan: "jiwa", src: "penduduk" },
     { id: "proyeksi_kecamatan_m", label: "Proyeksi Margadana", satuan: "jiwa", src: "penduduk" },
+    { id: "proyeksi_kelahiran", label: "Proyeksi Jumlah Kelahiran", satuan: "jiwa", src: "penduduk" },
+    { id: "proyeksi_kematian", label: "Proyeksi Jumlah Kematian", satuan: "jiwa", src: "penduduk" },
+    { id: "proyeksi_datang", label: "Proyeksi Jumlah Datang", satuan: "jiwa", src: "penduduk" },
+    { id: "proyeksi_pindah", label: "Proyeksi Jumlah Pindah", satuan: "jiwa", src: "penduduk" },
     ];
   const BASE_POP_2020 = 284116;
   const [selInd, setSelInd] = useState(PENDUDUK_INDIKATOR[0].id);
@@ -945,6 +949,10 @@ function PrediksiPage() {
       if (selInd === "proyeksi_kecamatan_tt") return sortedStats.map(s => ({ tahun: s.tahun, nilai: s.penduduk_tegal_timur || 0 }));
       if (selInd === "proyeksi_kecamatan_tb") return sortedStats.map(s => ({ tahun: s.tahun, nilai: s.penduduk_tegal_barat || 0 }));
       if (selInd === "proyeksi_kecamatan_m") return sortedStats.map(s => ({ tahun: s.tahun, nilai: s.penduduk_margadana || 0 }));
+      if (selInd === "proyeksi_kelahiran") return sortedStats.map(s => ({ tahun: s.tahun, nilai: s.jumlah_kelahiran || 0 }));
+      if (selInd === "proyeksi_kematian") return sortedStats.map(s => ({ tahun: s.tahun, nilai: s.jumlah_kematian || 0 }));
+      if (selInd === "proyeksi_datang") return sortedStats.map(s => ({ tahun: s.tahun, nilai: s.jumlah_datang || 0 }));
+      if (selInd === "proyeksi_pindah") return sortedStats.map(s => ({ tahun: s.tahun, nilai: s.jumlah_pindah || 0 }));
       if (selInd === "kepadatan_penduduk") return sortedStats.map(s => ({ tahun: s.tahun, nilai: s.jumlah_penduduk ? parseFloat((s.jumlah_penduduk / 39.68).toFixed(2)) : 0 }));
       if (selInd === "pertumbuhan_penduduk") {
         const hasil = [];
