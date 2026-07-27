@@ -987,25 +987,22 @@ function PrediksiPage() {
 
     if (selInd === "pertumbuhan_penduduk") {
       const popHistori = sortedStats.map(s => ({ tahun: s.tahun, nilai: s.jumlah_penduduk || 0 }));
-      const popVals = popHistori.map(d => d.nilai);
-      const popResult = popHistori.map(d => ({ tahun: d.tahun, histori: d.nilai, prediksi: null }));
-      const lastPopTahun = Math.max(...popHistori.map(d => d.tahun));
+      const last3 = popHistori.slice(-3);
+      const avgGrowth = last3.reduce((s, d, i, a) => {
+        if (i === 0) return s;
+        return s + (d.nilai - a[i - 1].nilai) / a[i - 1].nilai;
+      }, 0) / (last3.length - 1);
+      const result = popHistori.map((d, i, arr) => {
+        if (i === 0) return { tahun: d.tahun, histori: 0, prediksi: null };
+        const prevPop = arr[i - 1].nilai;
+        return { tahun: d.tahun, histori: prevPop ? parseFloat(((d.nilai - prevPop) / prevPop * 100).toFixed(2)) : 0, prediksi: null };
+      });
+      const lastPopTahun = popHistori[popHistori.length - 1].tahun;
       const MAX_TAHUN = 2040;
       for (let t = lastPopTahun + 1; t <= MAX_TAHUN; t++) {
-        const pred = knnPredict(popVals, Math.min(5, popVals.length - 1));
-        popResult.push({ tahun: t, histori: null, prediksi: pred });
-        popVals.push(pred);
+        result.push({ tahun: t, histori: null, prediksi: parseFloat((avgGrowth * 100).toFixed(2)) });
       }
-      return popResult.map((d, i, arr) => {
-        if (i === 0) return { tahun: d.tahun, histori: 0, prediksi: null };
-        const prev = arr[i - 1];
-        const prevPop = prev.histori ?? prev.prediksi;
-        const currPop = d.histori ?? d.prediksi;
-        if (i >= popHistori.length) {
-          return { tahun: d.tahun, histori: null, prediksi: prevPop && currPop ? parseFloat((((currPop - prevPop) / prevPop) * 100).toFixed(2)) : null };
-        }
-        return { tahun: d.tahun, histori: prevPop && currPop ? parseFloat((((currPop - prevPop) / prevPop) * 100).toFixed(2)) : 0, prediksi: null };
-      }).filter(d => d.tahun > 1996);
+      return result.filter(d => d.tahun > 1996);
     }
 
     const vals = histori.map(d => d.nilai);
