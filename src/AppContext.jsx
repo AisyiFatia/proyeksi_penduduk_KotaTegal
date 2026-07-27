@@ -74,7 +74,11 @@ export function AppProvider({ children }) {
           localStorage.removeItem("sipenduk_penduduk_v4");
           return [];
         }
-        if (p.length > 0) return p;
+        const clean = p.filter(d => d.tahun <= 2023);
+        if (clean.length !== p.length) {
+          localStorage.setItem("sipenduk_penduduk_v4", JSON.stringify(clean));
+        }
+        if (clean.length > 0) return clean;
       }
     } catch (_) {}
     return [];
