@@ -927,7 +927,6 @@ function PrediksiPage() {
     const src = PENDUDUK_INDIKATOR.find(i => i.id === selInd)?.src;
     if (src === "penduduk") {
       const SUM_MAP = {
-        jumlah_penduduk: ["jml_pria", "jml_perempuan"],
         proyeksi_usia: ["umur_0_4", "umur_5_18", "umur_15_64", "umur_65_plus"],
         proyeksi_pendidikan: ["jml_pendidikan_sd", "jml_pendidikan_smp", "jml_pendidikan_sma", "jml_pendidikan_pt"],
       };
@@ -939,6 +938,7 @@ function PrediksiPage() {
         }
         return Object.entries(tahunMap).sort((a, b) => a[0] - b[0]).map(([tahun, nilai]) => ({ tahun: +tahun, nilai }));
       }
+      if (selInd === "jumlah_penduduk") return sortedStats.map(s => ({ tahun: s.tahun, nilai: s.jumlah_penduduk || 0 }));
       if (selInd === "proyeksi_laki") return sortedStats.map(s => ({ tahun: s.tahun, nilai: s.jml_pria || 0 }));
       if (selInd === "proyeksi_perempuan") return sortedStats.map(s => ({ tahun: s.tahun, nilai: s.jml_perempuan || 0 }));
       if (selInd === "proyeksi_sex_ratio") return sortedStats.map(s => ({ tahun: s.tahun, nilai: s.jml_perempuan ? parseFloat(((s.jml_pria || 0) / s.jml_perempuan * 100).toFixed(2)) : 0 }));
@@ -958,7 +958,7 @@ function PrediksiPage() {
       if (selInd === "proyeksi_datang") return sortedStats.map(s => ({ tahun: s.tahun, nilai: s.jumlah_datang || 0 }));
       if (selInd === "proyeksi_pindah") return sortedStats.map(s => ({ tahun: s.tahun, nilai: s.jumlah_pindah || 0 }));
       if (selInd === "proyeksi_pertumbuhan_bersih") return sortedStats.map(s => ({ tahun: s.tahun, nilai: (s.jumlah_datang || 0) + (s.jumlah_kelahiran || 0) - (s.jumlah_pindah || 0) - (s.jumlah_kematian || 0) }));
-      if (selInd === "kepadatan_penduduk") return sortedStats.map(s => ({ tahun: s.tahun, nilai: s.jml_pria || s.jml_perempuan ? parseFloat((((s.jml_pria || 0) + (s.jml_perempuan || 0)) / 39.68).toFixed(2)) : 0 }));
+      if (selInd === "kepadatan_penduduk") return sortedStats.map(s => ({ tahun: s.tahun, nilai: s.jumlah_penduduk ? parseFloat((s.jumlah_penduduk / 39.68).toFixed(2)) : 0 }));
       if (selInd === "rasio_ketergantungan") return sortedStats.map(s => {
         const produktif = s.umur_15_64 || 0;
         return { tahun: s.tahun, nilai: produktif ? parseFloat((((s.umur_0_4 || 0) + (s.umur_65_plus || 0)) / produktif * 100).toFixed(2)) : 0 };
@@ -970,8 +970,8 @@ function PrediksiPage() {
             const s = sortedStats[i];
             if (i === 0) { hasil.push({ tahun: s.tahun, nilai: 0 }); continue; }
             const prev = sortedStats[i - 1];
-            const popPrev = (prev.jml_pria || 0) + (prev.jml_perempuan || 0);
-            const popCurr = (s.jml_pria || 0) + (s.jml_perempuan || 0);
+            const popPrev = prev.jumlah_penduduk || 0;
+            const popCurr = s.jumlah_penduduk || 0;
             if (popPrev === 0) { hasil.push({ tahun: s.tahun, nilai: 0 }); continue; }
             hasil.push({ tahun: s.tahun, nilai: parseFloat((((popCurr - popPrev) / popPrev) * 100).toFixed(2)) });
           }

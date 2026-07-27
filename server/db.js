@@ -127,6 +127,9 @@ export async function initDb() {
     }
   }
 
+  // Pastikan kolom baru ada (untuk upgrade tabel existing)
+  try { await pool.query("ALTER TABLE penduduk_primer ADD COLUMN jumlah_penduduk INT DEFAULT 0"); } catch (_) {}
+
   console.log(`MySQL database "${DB_CONFIG.database}" ready`);
 }
 

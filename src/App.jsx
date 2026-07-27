@@ -1050,12 +1050,12 @@ function predictNext(series) {
 }
 
 const PROYEKSI_INDIKATOR = [
-  { key: "total", label: "Jumlah Penduduk", color: "#0D9488", satuan: "jiwa", fn: d => (d.jml_pria||0) + (d.jml_perempuan||0) },
+  { key: "total", label: "Jumlah Penduduk", color: "#0D9488", satuan: "jiwa", fn: d => d.jumlah_penduduk || (d.jml_pria||0) + (d.jml_perempuan||0) },
   { key: "pria", label: "Penduduk Laki-laki", color: "#2563EB", satuan: "jiwa", fn: d => d.jml_pria||0 },
   { key: "perempuan", label: "Penduduk Perempuan", color: "#BE185D", satuan: "jiwa", fn: d => d.jml_perempuan||0 },
-  { key: "pertumbuhan", label: "Pertumbuhan Penduduk", color: "#D97706", satuan: "%", fn: (d, _, prevTotal) => prevTotal != null ? +(((d.jml_pria||0)+(d.jml_perempuan||0) - prevTotal) / prevTotal * 100).toFixed(2) : 0 },
+  { key: "pertumbuhan", label: "Pertumbuhan Penduduk", color: "#D97706", satuan: "%", fn: (d, _, prevTotal) => { const tot = d.jumlah_penduduk || (d.jml_pria||0)+(d.jml_perempuan||0); return prevTotal != null ? +((tot - prevTotal) / prevTotal * 100).toFixed(2) : 0; } },
   { key: "usia", label: "Penduduk Usia (0–4, 5–18, 15–64, 65+)", color: "#7C3AED", satuan: "jiwa", fn: d => (d.umur_0_4||0)+(d.umur_5_18||0)+(d.umur_15_64||0)+(d.umur_65_plus||0) },
-  { key: "kepadatan", label: "Kepadatan Penduduk", color: "#0891B2", satuan: "jiwa/km²", fn: d => Math.round(((d.jml_pria||0)+(d.jml_perempuan||0)) / 39.68) },
+  { key: "kepadatan", label: "Kepadatan Penduduk", color: "#0891B2", satuan: "jiwa/km²", fn: d => { const tot = d.jumlah_penduduk || (d.jml_pria||0)+(d.jml_perempuan||0); return Math.round(tot / 39.68); } },
   { key: "sex_ratio", label: "Rasio Jenis Kelamin", color: "#0E7490", satuan: "%", fn: d => d.jml_perempuan ? +((d.jml_pria||0) / d.jml_perempuan * 100).toFixed(1) : 0 },
   { key: "rasio_ketergantungan", label: "Rasio Ketergantungan", color: "#B45309", satuan: "%", fn: d => (d.umur_15_64||0) ? +(( (d.umur_0_4||0)+(d.umur_65_plus||0) ) / (d.umur_15_64||0) * 100).toFixed(1) : 0 },
   { key: "pendidikan", label: "Pendidikan (SD–PT)", color: "#0369A1", satuan: "jiwa", fn: d => (d.jml_pendidikan_sd||0)+(d.jml_pendidikan_smp||0)+(d.jml_pendidikan_sma||0)+(d.jml_pendidikan_pt||0) },
