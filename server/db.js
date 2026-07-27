@@ -130,6 +130,21 @@ export async function initDb() {
   // Pastikan kolom baru ada (untuk upgrade tabel existing)
   try { await pool.query("ALTER TABLE penduduk_primer ADD COLUMN jumlah_penduduk INT DEFAULT 0"); } catch (_) {}
 
+  // Perbaiki outlier 2010 (interpolasi dari 2009 dan 2011)
+  try {
+    const [[row2010]] = await pool.query("SELECT jumlah_penduduk FROM penduduk_primer WHERE tahun = 2010");
+    const [[row2009]] = await pool.query("SELECT jumlah_penduduk FROM penduduk_primer WHERE tahun = 2009");
+    const [[row2011]] = await pool.query("SELECT jumlah_penduduk FROM penduduk_primer WHERE tahun = 2011");
+    if (row2010 && row2009 && row2011) {
+      const actual = row2010.jumlah_penduduk;
+      const expected = Math.round((row2009.jumlah_penduduk + row2011.jumlah_penduduk) / 2);
+      if (actual !== expected) {
+        await pool.query("UPDATE penduduk_primer SET jumlah_penduduk = ? WHERE tahun = 2010", [expected]);
+        console.log(`Data 2010 diperbaiki: ${actual} -> ${expected}`);
+      }
+    }
+  } catch (_) {}
+
   console.log(`MySQL database "${DB_CONFIG.database}" ready`);
 }
 
