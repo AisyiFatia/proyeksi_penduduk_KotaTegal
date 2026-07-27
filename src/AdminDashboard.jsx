@@ -990,13 +990,10 @@ function PrediksiPage() {
   const chartData = useMemo(() => {
     if (!predicted || !histori.length) return [];
     const vals = histori.map(d => d.nilai);
-    const result = [];
-    for (let t = minTahun; t <= maxTahunHistori; t++) {
-      const existing = histori.find(d => d.tahun === t);
-      result.push({ tahun: t, histori: existing.nilai, prediksi: null });
-    }
+    const result = histori.map(d => ({ tahun: d.tahun, histori: d.nilai, prediksi: null }));
+    const lastTahun = Math.max(...histori.map(d => d.tahun));
     const MAX_TAHUN = 2040;
-    for (let t = maxTahunHistori + 1; t <= MAX_TAHUN; t++) {
+    for (let t = lastTahun + 1; t <= MAX_TAHUN; t++) {
       const pred = knnPredict(vals, Math.min(5, vals.length - 1));
       result.push({ tahun: t, histori: null, prediksi: pred });
       vals.push(pred);
