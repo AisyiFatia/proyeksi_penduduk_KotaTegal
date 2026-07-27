@@ -984,6 +984,30 @@ function PrediksiPage() {
 
   const chartData = useMemo(() => {
     if (!predicted || !histori.length) return [];
+
+    if (selInd === "pertumbuhan_penduduk") {
+      const popHistori = sortedStats.map(s => ({ tahun: s.tahun, nilai: s.jumlah_penduduk || 0 }));
+      const popVals = popHistori.map(d => d.nilai);
+      const popResult = popHistori.map(d => ({ tahun: d.tahun, histori: d.nilai, prediksi: null }));
+      const lastPopTahun = Math.max(...popHistori.map(d => d.tahun));
+      const MAX_TAHUN = 2040;
+      for (let t = lastPopTahun + 1; t <= MAX_TAHUN; t++) {
+        const pred = knnPredict(popVals, Math.min(5, popVals.length - 1));
+        popResult.push({ tahun: t, histori: null, prediksi: pred });
+        popVals.push(pred);
+      }
+      return popResult.map((d, i, arr) => {
+        if (i === 0) return { tahun: d.tahun, histori: 0, prediksi: null };
+        const prev = arr[i - 1];
+        const prevPop = prev.histori ?? prev.prediksi;
+        const currPop = d.histori ?? d.prediksi;
+        if (i >= popHistori.length) {
+          return { tahun: d.tahun, histori: null, prediksi: prevPop && currPop ? parseFloat((((currPop - prevPop) / prevPop) * 100).toFixed(2)) : null };
+        }
+        return { tahun: d.tahun, histori: prevPop && currPop ? parseFloat((((currPop - prevPop) / prevPop) * 100).toFixed(2)) : 0, prediksi: null };
+      }).filter(d => d.tahun > 1996);
+    }
+
     const vals = histori.map(d => d.nilai);
     const result = histori.map(d => ({ tahun: d.tahun, histori: d.nilai, prediksi: null }));
     const lastTahun = Math.max(...histori.map(d => d.tahun));
@@ -994,7 +1018,7 @@ function PrediksiPage() {
       vals.push(pred);
     }
     return result;
-  }, [selInd, predicted, histori, minTahun, maxTahunHistori]);
+  }, [selInd, predicted, histori, minTahun, maxTahunHistori, sortedStats]);
 
   const prediksiAkhir = useMemo(() => {
     if (!chartData.length) return {};
