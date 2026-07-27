@@ -974,7 +974,11 @@ function PrediksiPage() {
     return [];
   };
 
-  const histori = buildHistori();
+  const histori = (() => {
+    const raw = buildHistori();
+    while (raw.length > 0 && raw[raw.length - 1].nilai === 0) raw.pop();
+    return raw;
+  })();
   const minTahun = Math.min(...histori.map(d => d.tahun));
   const maxTahunHistori = Math.max(...histori.map(d => d.tahun));
 
@@ -1003,7 +1007,7 @@ function PrediksiPage() {
     const hist2030 = chartData.find(d => d.tahun === 2030)?.histori;
     const hist2035 = chartData.find(d => d.tahun === 2035)?.histori;
     return {
-      nilai2024: histori.find(d => d.tahun === 2024)?.nilai,
+      nilai2024: histori.find(d => d.tahun === 2024)?.nilai ?? chartData.find(d => d.tahun === 2024)?.prediksi,
       nilai2030: hist2030 ?? pred2030,
       nilai2035: hist2035 ?? pred2035,
       lastHistTahun: lastHist?.tahun,
