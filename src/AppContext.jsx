@@ -193,17 +193,7 @@ export function AppProvider({ children }) {
         api.getAdmin(),
       ]);
       if (pen && pen.length > 0) {
-        setPendudukData(prev => {
-          const backendTahun = new Set(pen.map(d => d.tahun));
-          const sekunderToPush = prev.filter(d =>
-            !backendTahun.has(d.tahun) && SEKUNDER_FIELDS.some(k => (d[k] || 0) > 0)
-          );
-          if (sekunderToPush.length > 0) {
-            api.bulkAddPendudukSekunder(sekunderToPush);
-            return [...pen, ...sekunderToPush];
-          }
-          return pen;
-        });
+        setPendudukData(pen);
       }
       if (per && per.length > 0) setPeriodeData(per);
       if (adm && adm.length > 0) {
@@ -511,6 +501,9 @@ export function AppProvider({ children }) {
       ALL_PENDUDUK_FIELDS.forEach(f => { a[f] += d[f] || 0; });
       return a;
     }, { ...init });
+    if (!t.jumlah_penduduk) {
+      t.jumlah_penduduk = (t.jml_pria || 0) + (t.jml_perempuan || 0);
+    }
     const pindah = t.jumlah_pindah;
     const datang = t.jumlah_datang;
     const lahir = t.jumlah_kelahiran;
@@ -530,6 +523,9 @@ export function AppProvider({ children }) {
       const rows = pendudukData.filter(d => d.tahun === y);
       const entry = { tahun: y, records: rows.length };
       ALL_PENDUDUK_FIELDS.forEach(f => { entry[f] = rows.reduce((s, d) => s + (d[f] || 0), 0); });
+      if (!entry.jumlah_penduduk) {
+        entry.jumlah_penduduk = (entry.jml_pria || 0) + (entry.jml_perempuan || 0);
+      }
       entry.pindah = entry.jumlah_pindah;
       entry.datang = entry.jumlah_datang;
       entry.lahir = entry.jumlah_kelahiran;
