@@ -993,24 +993,16 @@ function PrediksiPage() {
         return { tahun: d.tahun, histori: prevPop ? parseFloat(((d.nilai - prevPop) / prevPop * 100).toFixed(2)) : 0, prediksi: null };
       });
       const lastPopTahun = popHistori[popHistori.length - 1].tahun;
-      const recent = popHistori.slice(-10);
-      const n = recent.length;
-      let sx = 0, sy = 0, sxy = 0, sx2 = 0;
-      for (let i = 0; i < n; i++) {
-        sx += i; sy += recent[i].nilai;
-        sxy += i * recent[i].nilai; sx2 += i * i;
-      }
-      const denom = n * sx2 - sx * sx || 1;
-      const slope = (n * sxy - sx * sy) / denom;
-      const intercept = (sy - slope * sx) / n;
+      const last3 = popHistori.slice(-3);
+      const avgGrowth = last3.reduce((s, d, i, a) => {
+        if (i === 0) return s;
+        return s + (d.nilai - a[i - 1].nilai) / a[i - 1].nilai;
+      }, 0) / (last3.length - 1);
       const MAX_TAHUN = 2040;
-      let prevPop = popHistori[popHistori.length - 1].nilai;
       for (let t = lastPopTahun + 1; t <= MAX_TAHUN; t++) {
-        const idx = n + (t - lastPopTahun);
-        const currPop = Math.round(slope * idx + intercept);
-        const rate = currPop && prevPop ? parseFloat(((currPop - prevPop) / prevPop * 100).toFixed(2)) : 0;
+        const yearIdx = t - lastPopTahun - 1;
+        const rate = parseFloat(((avgGrowth * 100) + yearIdx * 0.05).toFixed(2));
         result.push({ tahun: t, histori: null, prediksi: rate });
-        prevPop = currPop;
       }
       return result.filter(d => d.tahun > 1996);
     }
