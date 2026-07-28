@@ -41,6 +41,7 @@ function crudRoutes(prefix, cols, table) {
     try {
       const placeholders = nonIdCols.map(() => "?").join(", ");
       const vals = nonIdCols.map(c => req.body[c] ?? 0);
+      vals[0] = vals[0] || (req.body.tahun - 1995) || 1;
       vals[1] = vals[1] || (req.body.tahun - 1995) || 1;
       const [result] = await pool.execute(`INSERT INTO ${table} (${nonIdCols.join(", ")}) VALUES (${placeholders})`, vals);
       res.status(201).json({ id_penduduk: result.insertId, ...req.body });
@@ -77,6 +78,7 @@ function crudRoutes(prefix, cols, table) {
       let count = 0;
       for (const r of records) {
         const vals = nonIdCols.map(c => r[c] ?? 0);
+        vals[0] = vals[0] || (r.tahun - 1995) || 1;
         vals[1] = vals[1] || (r.tahun - 1995) || 1;
         await pool.execute(`INSERT INTO ${table} (${nonIdCols.join(", ")}) VALUES (${ph})`, vals);
         count++;
