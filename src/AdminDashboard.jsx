@@ -616,7 +616,10 @@ function DataPendudukPage({ showForm, addToast, onNav }) {
   const [showFormInline, setShowFormInline] = useState(false);
   const PER_PAGE = 10;
 
+  const SEKUNDER_KEYS = NEW_FIELDS.map(f => f.k);
+
   const filtered = pendudukData.filter(d => {
+    if (SEKUNDER_KEYS.some(k => (d[k] ?? 0) > 0)) return false;
     const val = d[filterCol]?.toString() || "";
     return val.toLowerCase().includes(search.toLowerCase());
   });
