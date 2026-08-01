@@ -348,7 +348,10 @@ function DashboardPage({ onNav }) {
     { name: "Kematian", value: stats.mati, color: WRN },
   ];
 
-  const recent = [...pendudukData].sort((a, b) => b.tahun - a.tahun).slice(0, 8);
+  const recent = [...pendudukData]
+    .filter(d => !NEW_FIELDS.some(f => (d[f.k] ?? 0) > 0) && ["jumlah_pindah", "jumlah_datang", "jumlah_kelahiran", "jumlah_kematian", "jumlah_penduduk"].some(k => (d[k] ?? 0) > 0))
+    .sort((a, b) => b.tahun - a.tahun)
+    .slice(0, 8);
 
   const TT = ({ active, payload, label }) => !active || !payload?.length ? null : (
     <div style={{ background: W, border: `1.5px solid ${BDR}`, borderRadius: 8, padding: "0.75rem 1rem", fontSize: "0.78rem", boxShadow: "0 4px 12px rgba(0,0,0,0.1)" }}>
@@ -617,9 +620,11 @@ function DataPendudukPage({ showForm, addToast, onNav }) {
   const PER_PAGE = 10;
 
   const SEKUNDER_KEYS = NEW_FIELDS.map(f => f.k);
+  const PRIMER_KEYS = ["jumlah_pindah", "jumlah_datang", "jumlah_kelahiran", "jumlah_kematian", "jumlah_penduduk"];
 
   const filtered = pendudukData.filter(d => {
     if (SEKUNDER_KEYS.some(k => (d[k] ?? 0) > 0)) return false;
+    if (!PRIMER_KEYS.some(k => (d[k] ?? 0) > 0)) return false;
     const val = d[filterCol]?.toString() || "";
     return val.toLowerCase().includes(search.toLowerCase());
   });

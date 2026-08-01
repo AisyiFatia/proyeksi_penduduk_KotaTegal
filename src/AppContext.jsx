@@ -74,11 +74,7 @@ export function AppProvider({ children }) {
           localStorage.removeItem("sipenduk_penduduk_v4");
           return [];
         }
-        const clean = p.filter(d => d.tahun <= 2023);
-        if (clean.length !== p.length) {
-          localStorage.setItem("sipenduk_penduduk_v4", JSON.stringify(clean));
-        }
-        if (clean.length > 0) return clean;
+        if (p.length > 0) return p;
       }
     } catch (_) {}
     return [];
@@ -197,7 +193,13 @@ export function AppProvider({ children }) {
         api.getAdmin(),
       ]);
       if (pen && pen.length > 0) {
-        setPendudukData(pen);
+        setPendudukData(prev => {
+          const isSekunder = d => d.jumlah_pindah === undefined && d.jumlah_datang === undefined;
+          const key = d => `${d.tahun}|${isSekunder(d) ? "S" : "P"}`;
+          const seen = new Set(prev.map(key));
+          const extra = pen.filter(d => !seen.has(key(d)));
+          return extra.length ? [...prev, ...extra] : prev;
+        });
       }
       if (per && per.length > 0) setPeriodeData(per);
       if (adm && adm.length > 0) {
